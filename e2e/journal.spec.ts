@@ -111,7 +111,7 @@ test("backup export and restore preview, cancel and confirm", async ({
     buffer: Buffer.from(JSON.stringify(backup)),
   };
   await page.getByLabel("Choose backup", { exact: true }).setInputFiles(file);
-  await expect(page.getByText("1 flights in this backup")).toBeVisible();
+  await expect(page.getByText("1 flight in this backup")).toBeVisible();
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(page.locator(".flight-card")).toHaveCount(1);
   await restore(page, backupFor([input, { ...input, date: null }]));
@@ -166,7 +166,7 @@ test("browser contexts are isolated and imports reject stale previews across tab
   await page
     .getByLabel("Choose backup", { exact: true })
     .setInputFiles(backupFile(backup));
-  await expect(page.getByText("1 flights in this backup")).toBeVisible();
+  await expect(page.getByText("1 flight in this backup")).toBeVisible();
   const second = await page.context().newPage();
   await second.goto("/");
   await restore(second, backupFor([input, { ...input, date: null }]));
@@ -190,13 +190,11 @@ test("invalid imports preserve history and downloaded backups contain the saved 
   const backup = backupFor([input]);
   await restore(page, backup);
   await page.getByRole("button", { name: "Backup & restore" }).click();
-  await page
-    .getByLabel("Choose backup", { exact: true })
-    .setInputFiles({
-      name: "broken.json",
-      mimeType: "application/json",
-      buffer: Buffer.from("not JSON"),
-    });
+  await page.getByLabel("Choose backup", { exact: true }).setInputFiles({
+    name: "broken.json",
+    mimeType: "application/json",
+    buffer: Buffer.from("not JSON"),
+  });
   await expect(page.getByRole("alert")).toContainText("not valid JSON");
   await expect(
     page.getByRole("button", { name: "Replace history", exact: true }),

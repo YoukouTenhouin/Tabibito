@@ -10,8 +10,3 @@ export async function downloadBackup() {
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export function errorMessage(error: unknown) {
-  return error instanceof Error
-    ? error.message
-    : "Something went wrong. Please try again.";
-}

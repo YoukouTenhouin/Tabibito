@@ -27,5 +27,5 @@ export function totalFlightDistance(flights: readonly Route[]) {
   return { km, miles: km / KM_PER_MILE };
 }
 
-export const formatDistance = (value: number) =>
-  new Intl.NumberFormat("en", { maximumFractionDigits: 0 }).format(value);
+export const formatDistance = (value: number, locale: string = "en") =>
+  new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value);

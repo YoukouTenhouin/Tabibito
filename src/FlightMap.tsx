@@ -1,3 +1,6 @@
+import { errorCode, type ErrorCode } from "./errors";
+import { localizeMapStyle, mapControlLocale } from "./map-locale";
+import { useI18n } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import { type GeoJSONSource, type Map as MapInstance } from "maplibre-gl";
@@ -19,56 +22,64 @@ export default function FlightMap({
   selected: string | null;
   onSelect: (id: string) => void;
 }) {
+  const { t, locale } = useI18n();
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapInstance | null>(null);
   const latest = useRef({ flights, selected, onSelect });
   latest.current = { flights, selected, onSelect };
   const exportController = useRef<AbortController | null>(null);
   const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState("");
+  const [exportError, setExportError] = useState<ErrorCode | "">("");
   const [ready, setReady] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ErrorCode | "">("");
   const [globe, setGlobe] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const firstFit = useRef(false);
+  const camera = useRef<maplibregl.CameraOptions | null>(null);
+  const skipFit = useRef(false);
+  const latestGlobe = useRef(globe);
+  latestGlobe.current = globe;
   useEffect(() => {
     setError("");
     setReady(false);
-    firstFit.current = false;
-    setGlobe(false);
+    skipFit.current = camera.current !== null;
     let instance: MapInstance;
+    let initialized = false;
     try {
       instance = new maplibregl.Map({
         container: container.current!,
         style: "https://tiles.openfreemap.org/styles/positron",
         center: [12, 25],
         zoom: 1.3,
+        ...camera.current,
+        locale: mapControlLocale(locale),
+        localIdeographFontFamily:
+          '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif',
+        transformStyle: (_, style) =>
+          localizeMapStyle(
+            {
+              ...style,
+              projection: { type: latestGlobe.current ? "globe" : "mercator" },
+            },
+            locale,
+          ),
         minZoom: 0.7,
         maxZoom: 12,
         attributionControl: { compact: true },
       });
       map.current = instance;
     } catch {
-      setError(
-        "The map could not start on this device. Your flight history is still available.",
-      );
+      setError("errors.mapStart");
       return;
     }
     const timeout = setTimeout(() => {
-      if (!instance.isStyleLoaded())
-        setError(
-          "The map is taking too long to load. Your flight history is still available.",
-        );
+      if (!instance.isStyleLoaded()) setError("errors.mapTimeout");
     }, 15000);
     instance.addControl(
       new maplibregl.NavigationControl({ showCompass: false }),
       "bottom-right",
     );
-    instance.on("error", () =>
-      setError(
-        "Some map data could not load. You can still manage and back up your flights.",
-      ),
-    );
+    instance.on("error", () => setError("errors.mapData"));
     instance.on("load", () => {
       clearTimeout(timeout);
       instance.addSource("routes", {
@@ -140,19 +151,29 @@ export default function FlightMap({
       instance.on("mouseleave", "route-targets", () => {
         instance.getCanvas().style.cursor = "";
       });
+      initialized = true;
       setError("");
       setReady(true);
     });
     return () => {
       clearTimeout(timeout);
       exportController.current?.abort();
+      // A pan can leave tiles loading even after the map has initialized.
+      if (initialized) {
+        camera.current = {
+          center: instance.getCenter(),
+          zoom: instance.getZoom(),
+          bearing: instance.getBearing(),
+          pitch: instance.getPitch(),
+        };
+      }
       instance.remove();
       map.current = null;
     };
-  }, [attempt]);
+  }, [attempt, locale]);
   useEffect(() => {
     const instance = map.current;
-    if (!ready || !instance) return;
+    if (!ready || !instance || !instance.getSource("routes")) return;
     (instance.getSource("routes") as GeoJSONSource).setData(
       routeFeatures(flights),
     );
@@ -160,6 +181,10 @@ export default function FlightMap({
       airportFeatures(flights),
     );
     instance.setFilter("selected-route", ["==", ["get", "id"], selected ?? ""]);
+    if (skipFit.current) {
+      skipFit.current = false;
+      return;
+    }
     const chosen = flights.find((flight) => flight.id === selected);
     if (chosen || (!firstFit.current && flights.length)) {
       const bounds = routeBounds(chosen ? [chosen] : flights);
@@ -176,8 +201,8 @@ export default function FlightMap({
     }
   }, [flights, selected, ready]);
   useEffect(() => {
-    if (ready)
-      map.current?.setProjection({ type: globe ? "globe" : "mercator" });
+    if (ready && map.current?.isStyleLoaded())
+      map.current.setProjection({ type: globe ? "globe" : "mercator" });
   }, [globe, ready]);
   async function downloadMap() {
     if (!map.current || exporting) return;
@@ -186,13 +211,18 @@ export default function FlightMap({
     setExporting(true);
     setExportError("");
     try {
-      await exportMapImage(map.current, flights.length, controller.signal);
+      await exportMapImage(
+        map.current,
+        flights.length,
+        controller.signal,
+        locale,
+      );
     } catch (error) {
       if (!controller.signal.aborted)
         setExportError(
-          error instanceof Error
-            ? error.message
-            : "The map image could not be exported. Please try again.",
+          errorCode(error) === "errors.generic"
+            ? "errors.export"
+            : errorCode(error),
         );
     } finally {
       if (exportController.current === controller) {
@@ -203,14 +233,14 @@ export default function FlightMap({
   }
   const selectedFlight = flights.find((flight) => flight.id === selected);
   return (
-    <section className="map-panel" aria-label="Flight route map">
+    <section className="map-panel" aria-label={t("map.label")}>
       <div ref={container} className="map-canvas" />
       <div className="map-toolbar">
         <div className="map-caption">
           <span className="live-dot" />
-          YOUR PERSONAL ATLAS
+          {t("map.caption")}
         </div>
-        <div className="map-switch" aria-label="Map projection">
+        <div className="map-switch" aria-label={t("map.projection")}>
           <button
             aria-pressed={!globe}
             className={!globe ? "selected" : ""}
@@ -218,7 +248,7 @@ export default function FlightMap({
             disabled={!ready}
           >
             <Icon name="map" size={16} />
-            Map
+            {t("map.flat")}
           </button>
           <button
             aria-pressed={globe}
@@ -227,37 +257,37 @@ export default function FlightMap({
             disabled={!ready}
           >
             <Icon name="globe" size={16} />
-            Globe
+            {t("map.globe")}
           </button>
         </div>
       </div>
       {!ready && !error && (
         <div className="map-loading" role="status">
           <Icon name="globe" size={34} />
-          <span>Opening your world…</span>
+          <span>{t("map.opening")}</span>
         </div>
       )}
       {error && (
         <div className="map-error" role="status">
-          <span>{error}</span>
+          <span>{t(error)}</span>
           <button onClick={() => setAttempt((count) => count + 1)}>
-            Retry map
+            {t("map.retry")}
           </button>
         </div>
       )}
       {ready && !error && flights.length === 0 && (
         <div className="map-empty">
           <span className="compass-mark">✧</span>
-          <h3>A world of possibilities</h3>
-          <p>Your journeys will appear here.</p>
+          <h3>{t("map.emptyTitle")}</h3>
+          <p>{t("map.emptyHint")}</p>
         </div>
       )}
       {exportError && (
         <div className="map-export-error" role="alert">
-          {exportError}
+          {t(exportError)}
           <button
             type="button"
-            aria-label="Dismiss export error"
+            aria-label={t("map.dismissError")}
             onClick={() => setExportError("")}
           >
             ×
@@ -269,7 +299,7 @@ export default function FlightMap({
           <span />
           {selectedFlight
             ? `${airportCode(selectedFlight.origin)} → ${airportCode(selectedFlight.destination)}`
-            : `${flights.length} ${flights.length === 1 ? "flight" : "flights"} on the map`}
+            : t("map.count", { count: flights.length })}
         </div>
         <div className="map-actions">
           <button
@@ -277,10 +307,10 @@ export default function FlightMap({
             className="fit-button"
             disabled={!ready || Boolean(error) || exporting}
             onClick={downloadMap}
-            title="Download the current map view as a high-resolution PNG"
+            title={t("map.exportTitle")}
           >
             <Icon name="download" size={16} />
-            {exporting ? "Exporting…" : "Export map"}
+            {exporting ? t("map.exporting") : t("map.export")}
           </button>
           <button
             className="fit-button"
@@ -296,7 +326,7 @@ export default function FlightMap({
             }}
           >
             <Icon name="layers" size={16} />
-            Show all
+            {t("map.showAll")}
           </button>
         </div>
       </div>

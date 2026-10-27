@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { airportSearchNames } from "./places";
 
 export const airportSchema = z
   .object({
@@ -22,14 +23,14 @@ export const airportSchema = z
 
 export const dateSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a date in YYYY-MM-DD format.")
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "errors.dateFormat")
   .refine((value) => {
     const date = new Date(`${value}T00:00:00Z`);
     return (
       Number.isFinite(date.getTime()) &&
       date.toISOString().slice(0, 10) === value
     );
-  }, "Enter a valid calendar date.");
+  }, "errors.dateInvalid");
 
 export const flightNumberSchema = z
   .string()
@@ -38,10 +39,7 @@ export const flightNumberSchema = z
   .pipe(
     z
       .string()
-      .regex(
-        /^(?:[A-Z0-9]{2}|[A-Z]{3})\d{1,4}[A-Z]?$/,
-        "Use an airline code and flight number, for example BA249 or U21234.",
-      ),
+      .regex(/^(?:[A-Z0-9]{2}|[A-Z]{3})\d{1,4}[A-Z]?$/, "errors.flightNumber"),
   );
 
 const flightFields = {
@@ -55,10 +53,7 @@ const differentAirports = (value: { origin: Airport; destination: Airport }) =>
 export const flightInputSchema = z
   .object(flightFields)
   .strict()
-  .refine(
-    differentAirports,
-    "Choose different departure and arrival airports.",
-  );
+  .refine(differentAirports, "errors.differentAirports");
 export const flightSchema = z
   .object({
     ...flightFields,
@@ -67,10 +62,7 @@ export const flightSchema = z
     updatedAt: z.iso.datetime(),
   })
   .strict()
-  .refine(
-    differentAirports,
-    "Choose different departure and arrival airports.",
-  );
+  .refine(differentAirports, "errors.differentAirports");
 export const backupSchema = z
   .object({
     app: z.literal("tabibito"),
@@ -83,7 +75,7 @@ export const backupSchema = z
     (value) =>
       new Set(value.flights.map((flight) => flight.id)).size ===
       value.flights.length,
-    "Backup contains duplicate flight IDs.",
+    "errors.duplicateFlights",
   );
 export type Airport = z.infer<typeof airportSchema>;
 export type FlightInput = z.infer<typeof flightInputSchema>;
@@ -114,6 +106,7 @@ export function filteredFlights(
         a.country,
         a.iata,
         a.icao,
+        ...airportSearchNames(a),
       ]),
     ]
       .join(" ")

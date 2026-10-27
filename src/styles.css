@@ -1432,3 +1432,65 @@ label > input {
     align-items: center;
   }
 }
+
+/* The language preference is available at every viewport size. */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.language-switcher select {
+  min-height: 43px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fafbf8;
+  color: inherit;
+}
+:lang(zh-Hans) {
+  font-family:
+    "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+}
+html:lang(zh-Hans) .eyebrow,
+html:lang(zh-Hans) .header-label,
+html:lang(zh-Hans) .map-caption {
+  letter-spacing: 1px;
+}
+.flight-card-bottom > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .site-header {
+    height: auto;
+    min-height: 76px;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .header-actions {
+    gap: 6px;
+  }
+  .language-switcher > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .language-switcher select {
+    max-width: 105px;
+  }
+  .header-actions .button {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+}

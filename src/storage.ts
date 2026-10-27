@@ -1,3 +1,4 @@
+import { AppError } from "./errors";
 import {
   backupSchema,
   flightInputSchema,
@@ -29,20 +30,11 @@ export class FlightStore {
         opening.result.createObjectStore("flights", { keyPath: "id" });
         opening.result.createObjectStore("metadata");
       };
-      opening.onerror = () =>
-        reject(
-          new Error(
-            "Browser storage could not open. Check browser storage permissions and try again.",
-          ),
-        );
+      opening.onerror = () => reject(new AppError("errors.storageOpen"));
       let blocked = false;
       opening.onblocked = () => {
         blocked = true;
-        reject(
-          new Error(
-            "Close other Tabibito tabs and try again to update browser storage.",
-          ),
-        );
+        reject(new AppError("errors.storageBlocked"));
       };
       opening.onsuccess = () => {
         if (blocked) {
@@ -67,12 +59,7 @@ export class FlightStore {
       const completed = new Promise<void>((resolve, reject) => {
         tx.oncomplete = () => resolve();
         tx.onabort = () =>
-          reject(
-            tx.error ??
-              new Error(
-                "Browser storage transaction failed. No changes were saved.",
-              ),
-          );
+          reject(tx.error ?? new AppError("errors.storageTransaction"));
         tx.onerror = () => {
           /* onabort reports the transaction failure. */
         };
@@ -124,8 +111,7 @@ export class FlightStore {
     const parsed = flightInputSchema.parse(input);
     return this.transaction(true, async (flights) => {
       const old = await request(flights.get(id));
-      if (!old)
-        throw new Error("This flight no longer exists. Reload your history.");
+      if (!old) throw new AppError("errors.flightMissing");
       const flight: Flight = {
         ...flightSchema.parse(old),
         ...parsed,
@@ -163,9 +149,7 @@ export class FlightStore {
         String((await request(metadata.get("revision"))) ?? 0) !==
         expectedRevision
       )
-        throw new Error(
-          "History changed since the preview. Preview the backup again before restoring.",
-        );
+        throw new AppError("errors.historyChanged");
       await request(flights.clear());
       for (const flight of backup.flights) await request(flights.add(flight));
     });

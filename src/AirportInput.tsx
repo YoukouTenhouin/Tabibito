@@ -1,5 +1,8 @@
+import { airportName, airportCity, countryName } from "./places";
+import { usePlaceNames } from "./usePlaceNames";
+import { useI18n } from "./i18n";
 import { useEffect, useId, useRef, useState } from "react";
-import { errorMessage } from "./backup";
+import { errorCode, type ErrorCode } from "./errors";
 import { searchAirports } from "./airports";
 import { airportCode, type Airport } from "./shared";
 import { Icon } from "./icons";
@@ -13,19 +16,22 @@ export function AirportInput({
   value: Airport | null;
   onChange: (airport: Airport | null) => void;
 }) {
+  const { t, locale } = useI18n();
+  const placeVersion = usePlaceNames();
   const id = useId();
   const [query, setQuery] = useState(
-    value ? `${airportCode(value)} · ${value.name}` : "",
+    value ? `${airportCode(value)} · ${airportName(value, locale)}` : "",
   );
   const [results, setResults] = useState<Airport[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ErrorCode | "">("");
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (value) setQuery(`${airportCode(value)} · ${value.name}`);
-  }, [value]);
+    if (value)
+      setQuery(`${airportCode(value)} · ${airportName(value, locale)}`);
+  }, [value, locale, placeVersion]);
   useEffect(() => {
     if (value || query.trim().length < 2) {
       setResults([]);
@@ -44,7 +50,7 @@ export function AirportInput({
           setActive(0);
         })
         .catch((error) => {
-          if (!controller.signal.aborted) setError(errorMessage(error));
+          if (!controller.signal.aborted) setError(errorCode(error));
         })
         .finally(() => {
           if (!controller.signal.aborted) setLoading(false);
@@ -54,7 +60,7 @@ export function AirportInput({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, value]);
+  }, [query, value, placeVersion]);
   function select(airport: Airport) {
     onChange(airport);
     setOpen(false);
@@ -82,7 +88,7 @@ export function AirportInput({
             open && results[active] ? `${id}-${active}` : undefined
           }
           autoComplete="off"
-          placeholder="City, airport or code"
+          placeholder={t("airport.placeholder")}
           onFocus={() => setOpen(true)}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -116,14 +122,14 @@ export function AirportInput({
           className="airport-options"
           id={`${id}-list`}
           role="listbox"
-          aria-label={`${label} results`}
+          aria-label={t("airport.results", { label })}
         >
           {loading ? (
-            <p role="status">Searching airports…</p>
+            <p role="status">{t("airport.searching")}</p>
           ) : error ? (
-            <p role="alert">{error}</p>
+            <p role="alert">{t(error)}</p>
           ) : results.length === 0 ? (
-            <p>No airports found. Try an IATA or ICAO code.</p>
+            <p>{t("airport.empty")}</p>
           ) : (
             results.map((airport, index) => (
               <button
@@ -138,10 +144,11 @@ export function AirportInput({
               >
                 <strong>{airportCode(airport)}</strong>
                 <span>
-                  {airport.name}
+                  {airportName(airport, locale)}
                   <small>
-                    {airport.city || airport.country} · {airport.country}
-                    {airport.closed ? " · Closed airport" : ""}
+                    {airportCity(airport, locale)} ·{" "}
+                    {countryName(airport.country, locale)}
+                    {airport.closed ? t("airport.closed") : ""}
                   </small>
                 </span>
               </button>
@@ -151,8 +158,9 @@ export function AirportInput({
       )}
       {value && (
         <small className="field-hint">
-          {value.city || value.name}, {value.country}
-          {value.closed ? " · Closed airport" : ""}
+          {airportCity(value, locale) || airportName(value, locale)},{" "}
+          {countryName(value.country, locale)}
+          {value.closed ? t("airport.closed") : ""}
         </small>
       )}
     </div>

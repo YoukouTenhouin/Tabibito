@@ -1,3 +1,5 @@
+import { i18n, type Locale } from "./i18n";
+import { AppError } from "./errors";
 import * as maplibregl from "maplibre-gl";
 import type { Map as MapInstance } from "maplibre-gl";
 
@@ -6,9 +8,11 @@ export async function exportMapImage(
   source: MapInstance,
   flightCount: number,
   signal: AbortSignal,
+  locale: Locale,
 ): Promise<void> {
+  const t = i18n.getFixedT(locale);
   const { width, height } = source.getCanvas().getBoundingClientRect();
-  if (!width || !height) throw new Error("The map is not ready to export.");
+  if (!width || !height) throw new AppError("errors.exportNotReady");
   const host = document.createElement("div");
   host.setAttribute("aria-hidden", "true");
   Object.assign(host.style, {
@@ -35,6 +39,8 @@ export async function exportMapImage(
       pixelRatio: 2400 / Math.max(width, height),
       canvasContextAttributes: { preserveDrawingBuffer: true },
       interactive: false,
+      localIdeographFontFamily:
+        '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif',
       attributionControl: false,
       trackResize: false,
       fadeDuration: 0,
@@ -49,16 +55,10 @@ export async function exportMapImage(
         error ? reject(error) : resolve();
       };
       const ready = () => finish();
-      const failed = () =>
-        finish(
-          new Error("Map data could not load for the image. Please try again."),
-        );
-      const aborted = () => finish(new Error("Map export cancelled."));
+      const failed = () => finish(new AppError("errors.exportData"));
+      const aborted = () => finish(new AppError("errors.exportCancelled"));
       const timeout = setTimeout(
-        () =>
-          finish(
-            new Error("The map image took too long to load. Please try again."),
-          ),
+        () => finish(new AppError("errors.exportTimeout")),
         25000,
       );
       renderer.on("idle", ready);
@@ -72,15 +72,14 @@ export async function exportMapImage(
     image.width = rendered.width;
     image.height = rendered.height + 112;
     const context = image.getContext("2d");
-    if (!context)
-      throw new Error("This browser could not create the map image.");
+    if (!context) throw new AppError("errors.exportCanvas");
     context.fillStyle = "#f7f8f5";
     context.fillRect(0, 0, image.width, image.height);
     context.drawImage(rendered, 0, 0);
     context.fillStyle = "#214f43";
     context.font = "28px sans-serif";
     context.fillText(
-      `Tabibito · ${flightCount} ${flightCount === 1 ? "flight" : "flights"} in filtered history`,
+      t("map.exportCaption", { count: flightCount }),
       24,
       rendered.height + 40,
       image.width - 48,
@@ -105,7 +104,7 @@ export async function exportMapImage(
         (result) =>
           result
             ? resolve(result)
-            : reject(new Error("This browser could not encode the map image.")),
+            : reject(new AppError("errors.exportEncode")),
         "image/png",
       );
     });

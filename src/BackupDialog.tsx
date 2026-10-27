@@ -1,6 +1,9 @@
+import { useI18n } from "./i18n";
+import { AppError } from "./errors";
 import { flightStore } from "./storage";
 import { useState } from "react";
-import { downloadBackup, errorMessage } from "./backup";
+import { downloadBackup } from "./backup";
+import { errorCode, type ErrorCode } from "./errors";
 import { backupSchema, type Backup } from "./shared";
 import { Modal } from "./Modal";
 import { Icon } from "./icons";
@@ -16,11 +19,12 @@ export function BackupDialog({
   onClose: () => void;
   onRestored: () => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [backup, setBackup] = useState<Backup | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ErrorCode | "">("");
   async function load(file?: File) {
     setBackup(null);
     setPreview(null);
@@ -29,21 +33,15 @@ export function BackupDialog({
     if (!file) return;
     setBusy(true);
     try {
-      if (file.size > 10 * 1024 * 1024)
-        throw new Error("Choose a backup smaller than 10 MB.");
+      if (file.size > 10 * 1024 * 1024) throw new AppError("errors.backupSize");
       const parsed = backupSchema.safeParse(JSON.parse(await file.text()));
-      if (!parsed.success)
-        throw new Error(
-          "This is not a valid Tabibito version 1 backup. No data has been changed.",
-        );
+      if (!parsed.success) throw new AppError("errors.backupInvalid");
       const result = await flightStore.preview(parsed.data);
       setBackup(parsed.data);
       setPreview(result);
     } catch (error) {
       setError(
-        error instanceof SyntaxError
-          ? "This file is not valid JSON. No data has been changed."
-          : errorMessage(error),
+        error instanceof SyntaxError ? "errors.backupJson" : errorCode(error),
       );
     } finally {
       setBusy(false);
@@ -58,7 +56,7 @@ export function BackupDialog({
       await onRestored();
       onClose();
     } catch (error) {
-      setError(errorMessage(error));
+      setError(errorCode(error));
       setPreview(null);
       setBackup(null);
       setConfirmed(false);
@@ -68,8 +66,8 @@ export function BackupDialog({
   }
   return (
     <Modal
-      title="Keep your journeys safe"
-      subtitle="Download your history, or restore a saved backup."
+      title={t("backup.title")}
+      subtitle={t("backup.subtitle")}
       onClose={onClose}
       busy={busy}
     >
@@ -78,8 +76,8 @@ export function BackupDialog({
           <Icon name="download" />
         </div>
         <div>
-          <h3>Export your history</h3>
-          <p>All flights and airport details in one portable JSON file.</p>
+          <h3>{t("backup.exportTitle")}</h3>
+          <p>{t("backup.exportHint")}</p>
           <button
             className="button secondary"
             disabled={busy}
@@ -88,12 +86,12 @@ export function BackupDialog({
               try {
                 await downloadBackup();
               } catch (error) {
-                setError(errorMessage(error));
+                setError(errorCode(error));
               }
             }}
           >
             <Icon name="download" size={16} />
-            Download backup
+            {t("backup.download")}
           </button>
         </div>
       </section>
@@ -102,16 +100,14 @@ export function BackupDialog({
           <Icon name="upload" />
         </div>
         <div>
-          <h3>Restore a backup</h3>
-          <p>
-            Preview a Tabibito backup before replacing your current history.
-          </p>
+          <h3>{t("backup.restoreTitle")}</h3>
+          <p>{t("backup.restoreHint")}</p>
           <label
             className={`button secondary file-button ${busy ? "disabled" : ""}`}
           >
-            Choose backup
+            {t("backup.choose")}
             <input
-              aria-label="Choose backup"
+              aria-label={t("backup.choose")}
               type="file"
               accept=".json,application/json"
               disabled={busy}
@@ -123,14 +119,11 @@ export function BackupDialog({
           </label>
         </div>
       </section>
-      {busy && <p role="status">Working…</p>}
+      {busy && <p role="status">{t("backup.working")}</p>}
       {preview && (
         <div className="restore-preview">
-          <h3>{preview.incomingCount} flights in this backup</h3>
-          <p>
-            Restoring will replace all {preview.currentCount} flights currently
-            saved. Download your current history first if you want to keep it.
-          </p>
+          <h3>{t("backup.count", { count: preview.incomingCount })}</h3>
+          <p>{t("backup.replaceHint", { count: preview.currentCount })}</p>
           <label className="checkbox">
             <input
               type="checkbox"
@@ -138,25 +131,25 @@ export function BackupDialog({
               disabled={busy}
               onChange={(event) => setConfirmed(event.target.checked)}
             />
-            Replace my current history with this backup
+            {t("backup.confirm")}
           </label>
         </div>
       )}
       {error && (
         <p className="error" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
       <div className="modal-actions">
         <button className="button secondary" disabled={busy} onClick={onClose}>
-          Cancel
+          {t("common.cancel")}
         </button>
         <button
           className="button danger"
           disabled={!confirmed || !preview || busy}
           onClick={restore}
         >
-          Replace history
+          {t("backup.replace")}
         </button>
       </div>
     </Modal>

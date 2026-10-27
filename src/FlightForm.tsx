@@ -1,5 +1,6 @@
+import { useI18n } from "./i18n";
 import { useState } from "react";
-import { errorMessage } from "./backup";
+import { errorCode, type ErrorCode } from "./errors";
 import { flightStore } from "./storage";
 import { flightInputSchema, type Airport, type Flight } from "./shared";
 import { AirportInput } from "./AirportInput";
@@ -16,13 +17,14 @@ export function FlightForm({
   onClose: () => void;
   onSaved: (flight: Flight) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [date, setDate] = useState(flight?.date ?? "");
   const [number, setNumber] = useState(flight?.flightNumber ?? "");
   const [origin, setOrigin] = useState<Airport | null>(flight?.origin ?? null);
   const [destination, setDestination] = useState<Airport | null>(
     flight?.destination ?? null,
   );
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ErrorCode | "">("");
   const [busy, setBusy] = useState<"save" | null>(null);
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -36,8 +38,8 @@ export function FlightForm({
     if (!parsed.success) {
       setError(
         !origin || !destination
-          ? "Select both airports before saving."
-          : parsed.error.issues[0].message,
+          ? "errors.selectAirports"
+          : errorCode(parsed.error),
       );
       return;
     }
@@ -49,15 +51,15 @@ export function FlightForm({
       await onSaved(saved);
       onClose();
     } catch (error) {
-      setError(errorMessage(error));
+      setError(errorCode(error));
     } finally {
       setBusy(null);
     }
   }
   return (
     <Modal
-      title={flight ? "Edit your flight" : "Add a journey"}
-      subtitle="A new line on your personal map."
+      title={flight ? t("flight.editTitle") : t("flight.addTitle")}
+      subtitle={t("flight.subtitle")}
       onClose={onClose}
       busy={Boolean(busy)}
     >
@@ -72,9 +74,10 @@ export function FlightForm({
               }}
             />
             <label>
-              Flight number <span className="optional">optional</span>
+              {t("flight.number")}{" "}
+              <span className="optional">{t("common.optional")}</span>
               <input
-                placeholder="e.g. BA249"
+                placeholder={t("flight.numberPlaceholder")}
                 maxLength={20}
                 value={number}
                 onChange={(event) => {
@@ -85,7 +88,7 @@ export function FlightForm({
           </div>
           <div className="airport-fields">
             <AirportInput
-              label="Departure airport"
+              label={t("flight.origin")}
               value={origin}
               onChange={setOrigin}
             />
@@ -93,14 +96,14 @@ export function FlightForm({
               <Icon name="arrow" size={18} />
             </div>
             <AirportInput
-              label="Arrival airport"
+              label={t("flight.destination")}
               value={destination}
               onChange={setDestination}
             />
           </div>
           {error && (
             <p className="error" role="alert">
-              {error}
+              {t(error)}
             </p>
           )}
           <div className="modal-actions">
@@ -109,7 +112,7 @@ export function FlightForm({
               className="button secondary"
               onClick={onClose}
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               className="button primary"
@@ -118,10 +121,10 @@ export function FlightForm({
             >
               <Icon name="plus" size={17} />
               {busy === "save"
-                ? "Saving…"
+                ? t("flight.saving")
                 : flight
-                  ? "Save changes"
-                  : "Save flight"}
+                  ? t("flight.saveChanges")
+                  : t("flight.save")}
             </button>
           </div>
         </fieldset>

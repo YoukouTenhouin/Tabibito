@@ -1,3 +1,9 @@
+import { AppError } from "./errors";
+import {
+  airportSearchNames,
+  loadPlaceNames,
+  placeNamesVersion,
+} from "./places";
 import { airportSchema, type Airport } from "./shared";
 
 const normalize = (value: string) =>
@@ -8,10 +14,22 @@ const normalize = (value: string) =>
 export class AirportCatalog {
   readonly airports: Airport[];
   private codes = new Map<string, Airport>();
-  private searchable: { airport: Airport; text: string }[];
+  private searchable: { airport: Airport; text: string }[] = [];
+  private namesVersion = -1;
   constructor(airports: Airport[]) {
     this.airports = airports;
-    this.searchable = airports.map((airport) => ({
+    this.updateSearchIndex();
+    // Prefer currently operating airports when a historic code has been reused.
+    for (const airport of [...airports].sort(
+      (a, b) => Number(b.closed) - Number(a.closed),
+    )) {
+      for (const code of [airport.id, airport.iata, airport.icao])
+        if (code) this.codes.set(code.toUpperCase(), airport);
+    }
+  }
+  private updateSearchIndex() {
+    this.namesVersion = placeNamesVersion();
+    this.searchable = this.airports.map((airport) => ({
       airport,
       text: normalize(
         [
@@ -21,21 +39,16 @@ export class AirportCatalog {
           airport.name,
           airport.city,
           airport.country,
+          ...airportSearchNames(airport),
         ].join(" "),
       ),
     }));
-    // Prefer currently operating airports when a historic code has been reused.
-    for (const airport of [...airports].sort(
-      (a, b) => Number(b.closed) - Number(a.closed),
-    )) {
-      for (const code of [airport.id, airport.iata, airport.icao])
-        if (code) this.codes.set(code.toUpperCase(), airport);
-    }
   }
   byCode(code: string | undefined | null) {
     return code ? this.codes.get(code.toUpperCase()) : undefined;
   }
   search(query: string) {
+    if (this.namesVersion !== placeNamesVersion()) this.updateSearchIndex();
     const tokens = normalize(query.trim()).split(/\s+/);
     if (query.trim().length < 2) return [];
     const exact = query.trim().toUpperCase();
@@ -57,8 +70,7 @@ let catalog: Promise<AirportCatalog> | undefined;
 export function searchAirports(query: string) {
   catalog ??= fetch(new URL("../data/airports.json", import.meta.url))
     .then(async (response) => {
-      if (!response.ok)
-        throw new Error("Airport catalog could not load. Please try again.");
+      if (!response.ok) throw new AppError("errors.catalog");
       return new AirportCatalog(
         airportSchema
           .array()
@@ -68,7 +80,9 @@ export function searchAirports(query: string) {
     })
     .catch((error) => {
       catalog = undefined;
-      throw error;
+      throw new AppError("errors.catalog", { cause: error });
     });
-  return catalog.then((value) => value.search(query));
+  return Promise.all([catalog, loadPlaceNames()]).then(([value]) =>
+    value.search(query),
+  );
 }

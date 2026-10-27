@@ -13,13 +13,16 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "airports:update": "node scripts/update-airports.mjs"
+    "airports:update": "node scripts/update-airports.mjs",
+    "airports:translate": "node scripts/update-airport-translations.mjs"
   },
   "dependencies": {
     "@turf/great-circle": "^7.2.0",
+    "i18next": "^26.5.11",
     "maplibre-gl": "^6.16.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-i18next": "^17.1.9",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -28,9 +31,10 @@
     "@types/node": "^24.10.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "fake-indexeddb": "^6.2.4",
+    "opencc-js": "^1.4.2",
     "typescript": "~5.9.3",
     "vite": "^8.3.5",
-    "vitest": "^5.0.5",
-    "fake-indexeddb": "^6.2.4"
+    "vitest": "^5.0.5"
   }
 }

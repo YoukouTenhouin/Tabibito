@@ -1,3 +1,4 @@
+import { useI18n, formatDate } from "./i18n";
 import {
   Component,
   lazy,
@@ -8,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { errorMessage } from "./backup";
+import { errorCode, type ErrorCode } from "./errors";
 import { flightStore } from "./storage";
 import { airportCode, filteredFlights, type Flight } from "./shared";
 import { FlightForm } from "./FlightForm";
@@ -16,6 +17,9 @@ import { BackupDialog } from "./BackupDialog";
 import { Modal } from "./Modal";
 import { Icon } from "./icons";
 import { totalFlightDistance, formatDistance } from "./distance";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { airportName, airportCity, countryName } from "./places";
+import { usePlaceNames } from "./usePlaceNames";
 const FlightMap = lazy(() => import("./FlightMap"));
 class MapBoundary extends Component<
   { children: ReactNode },
@@ -26,35 +30,32 @@ class MapBoundary extends Component<
     return { failed: true };
   }
   render() {
-    return this.state.failed ? (
-      <section className="map-panel map-placeholder">
-        <div>
-          <p>The map could not load.</p>
-          <p>Your history and backups are still available.</p>
-          <button className="text-button" onClick={() => location.reload()}>
-            Reload map
-          </button>
-        </div>
-      </section>
-    ) : (
-      this.props.children
-    );
+    return this.state.failed ? <MapFailure /> : this.props.children;
   }
 }
-const formatDate = (date: string | null) =>
-  date
-    ? new Intl.DateTimeFormat("en", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        timeZone: "UTC",
-      }).format(new Date(`${date}T00:00:00Z`))
-    : "Date not recorded";
+function MapFailure() {
+  const { t } = useI18n();
+  return (
+    <section className="map-panel map-placeholder">
+      <div>
+        <p>{t("map.failed")}</p>
+        <p>{t("map.historyAvailable")}</p>
+        <button className="text-button" onClick={() => location.reload()}>
+          {t("map.reload")}
+        </button>
+      </div>
+    </section>
+  );
+}
 
 export default function App() {
+  const { t, locale } = useI18n();
+  const placeVersion = usePlaceNames();
+  const displayDate = (date: string | null) =>
+    date ? formatDate(date, locale) : t("history.noDate");
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ErrorCode | "">("");
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [year, setYear] = useState("");
@@ -62,13 +63,13 @@ export default function App() {
   const [backupOpen, setBackupOpen] = useState(false);
   const [deleting, setDeleting] = useState<Flight | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
+  const [deleteError, setDeleteError] = useState<ErrorCode | "">("");
   const refresh = useCallback(async () => {
     setError("");
     try {
       setFlights(await flightStore.list());
     } catch (error) {
-      setError(errorMessage(error));
+      setError(errorCode(error));
     } finally {
       setLoading(false);
     }
@@ -83,7 +84,7 @@ export default function App() {
   }, [refresh]);
   const visible = useMemo(
     () => filteredFlights(flights, search, year),
-    [flights, search, year],
+    [flights, search, year, placeVersion],
   );
   const distance = useMemo(() => totalFlightDistance(flights), [flights]);
   const years = [
@@ -114,7 +115,7 @@ export default function App() {
       if (selected === deleting.id) setSelected(null);
       setDeleting(null);
     } catch (error) {
-      setDeleteError(errorMessage(error));
+      setDeleteError(errorCode(error));
     } finally {
       setDeleteBusy(false);
     }
@@ -122,7 +123,7 @@ export default function App() {
   return (
     <>
       <header className="site-header">
-        <a href="/" className="brand" aria-label="Tabibito home">
+        <a href="/" className="brand" aria-label={t("app.home")}>
           <span className="brand-mark">
             <Icon name="plane" size={22} />
           </span>
@@ -133,44 +134,46 @@ export default function App() {
             </span>
           </span>
         </a>
-        <span className="header-label">A PERSONAL FLIGHT JOURNAL</span>
-        <button className="button subtle" onClick={() => setBackupOpen(true)}>
-          <Icon name="download" size={17} />
-          <span>Backup & restore</span>
-        </button>
+        <span className="header-label">{t("app.tagline")}</span>
+        <div className="header-actions">
+          <LanguageSwitcher />
+          <button className="button subtle" onClick={() => setBackupOpen(true)}>
+            <Icon name="download" size={17} />
+            <span>{t("backup.open")}</span>
+          </button>
+        </div>
       </header>
       <main>
         <section className="intro">
           <div>
-            <p className="eyebrow">PLACES YOU’VE BEEN. STORIES YOU KEEP.</p>
+            <p className="eyebrow">{t("app.eyebrow")}</p>
             <h1>
-              Your travels, traced<span>.</span>
+              {t("app.heading")}
+              <span>.</span>
             </h1>
-            <p className="intro-copy">
-              Every flight is part of your story. See how far you’ve come.
-            </p>
+            <p className="intro-copy">{t("app.intro")}</p>
           </div>
           <button
             className="button primary add-flight"
             onClick={() => setForm("new")}
           >
             <Icon name="plus" size={19} />
-            Add flight
+            {t("flight.add")}
           </button>
         </section>
-        <p className="notice">
-          History is saved only in this browser for this site address. Clearing
-          site data removes it. Export a backup to keep it safe or transfer it
-          to another device.
-        </p>
-        <section className="stats" aria-label="Your travel statistics">
+        <p className="notice">{t("app.notice")}</p>
+        <section className="stats" aria-label={t("stats.label")}>
           <div className="stat">
             <span className="stat-icon">
               <Icon name="plane" />
             </span>
             <div>
-              <strong>{loading ? "—" : flights.length}</strong>
-              <span>Flights taken</span>
+              <strong>
+                {loading
+                  ? "—"
+                  : new Intl.NumberFormat(locale).format(flights.length)}
+              </strong>
+              <span>{t("stats.flights")}</span>
             </div>
           </div>
           <div className="stat">
@@ -178,8 +181,12 @@ export default function App() {
               <Icon name="pin" />
             </span>
             <div>
-              <strong>{loading ? "—" : airports.size}</strong>
-              <span>Airports visited</span>
+              <strong>
+                {loading
+                  ? "—"
+                  : new Intl.NumberFormat(locale).format(airports.size)}
+              </strong>
+              <span>{t("stats.airports")}</span>
             </div>
           </div>
           <div className="stat">
@@ -187,28 +194,38 @@ export default function App() {
               <Icon name="globe" />
             </span>
             <div>
-              <strong>{loading ? "—" : countries.size}</strong>
-              <span>Countries connected</span>
+              <strong>
+                {loading
+                  ? "—"
+                  : new Intl.NumberFormat(locale).format(countries.size)}
+              </strong>
+              <span>{t("stats.countries")}</span>
             </div>
           </div>
           <div
             className="distance-stat"
             role="group"
-            aria-label="Estimated total flight distance"
+            aria-label={t("stats.distanceLabel")}
           >
-            <span>Estimated total distance</span>
+            <span>{t("stats.distance")}</span>
             <strong>
-              {loading ? "—" : `${formatDistance(distance.km)} km`}
+              {loading
+                ? "—"
+                : t("stats.km", { value: formatDistance(distance.km, locale) })}
             </strong>
             <strong>
-              {loading ? "—" : `${formatDistance(distance.miles)} miles`}
+              {loading
+                ? "—"
+                : t("stats.miles", {
+                    value: formatDistance(distance.miles, locale),
+                  })}
             </strong>
-            <small>All flights · great-circle estimate</small>
+            <small>{t("stats.note")}</small>
           </div>
         </section>
         {error && (
           <div className="error load-error" role="alert">
-            {error}
+            {t(error)}
             <button
               className="text-button"
               onClick={() => {
@@ -216,42 +233,44 @@ export default function App() {
                 void refresh().catch(() => {});
               }}
             >
-              Try again
+              {t("common.retry")}
             </button>
           </div>
         )}
         <div className="journal-layout">
           <section className="history-panel" aria-labelledby="history-title">
             <div className="history-heading">
-              <h2 id="history-title">Flight history</h2>
-              <span className="count-badge">{visible.length}</span>
+              <h2 id="history-title">{t("history.title")}</h2>
+              <span className="count-badge">
+                {new Intl.NumberFormat(locale).format(visible.length)}
+              </span>
             </div>
             <div className="filters">
               <div className="input-with-icon search">
                 <Icon name="search" size={17} />
                 <input
-                  aria-label="Search flight history"
-                  placeholder="Search flights or places"
+                  aria-label={t("history.searchLabel")}
+                  placeholder={t("history.searchPlaceholder")}
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                 />
               </div>
               <select
-                aria-label="Filter by year"
+                aria-label={t("history.yearFilter")}
                 value={year}
                 onChange={(event) => setYear(event.target.value)}
               >
-                <option value="">All years</option>
+                <option value="">{t("history.allYears")}</option>
                 {years.map((value) => (
                   <option key={value}>{value}</option>
                 ))}
-                <option value="undated">Undated</option>
+                <option value="undated">{t("history.undated")}</option>
               </select>
             </div>
             <div className="history-list" aria-busy={loading}>
               {loading ? (
                 <p className="list-status" role="status">
-                  Loading your journeys…
+                  {t("history.loading")}
                 </p>
               ) : !visible.length ? (
                 <div className="empty-history">
@@ -263,17 +282,17 @@ export default function App() {
                   </span>
                   <h3>
                     {error
-                      ? "History unavailable"
+                      ? t("history.unavailable")
                       : flights.length
-                        ? "No matching journeys"
-                        : "Your story starts here"}
+                        ? t("history.noMatches")
+                        : t("history.emptyTitle")}
                   </h3>
                   <p>
                     {error
-                      ? "Try loading your history again."
+                      ? t("history.retryHint")
                       : flights.length
-                        ? "Try another search or choose a different year."
-                        : "Add your first flight and put a new line on the map."}
+                        ? t("history.searchHint")
+                        : t("history.emptyHint")}
                   </p>
                   {!error && (
                     <button
@@ -286,8 +305,8 @@ export default function App() {
                       }}
                     >
                       {flights.length
-                        ? "Clear filters"
-                        : "Add your first flight"}
+                        ? t("history.clearFilters")
+                        : t("history.firstFlight")}
                       <Icon name="arrow" size={16} />
                     </button>
                   )}
@@ -302,19 +321,23 @@ export default function App() {
                       className="flight-select"
                       onClick={() => setSelected(flight.id)}
                       aria-pressed={selected === flight.id}
-                      aria-label={`Show ${airportCode(flight.origin)} to ${airportCode(flight.destination)} on map`}
+                      aria-label={t("history.showRoute", {
+                        origin: airportCode(flight.origin),
+                        destination: airportCode(flight.destination),
+                      })}
                     >
                       <div className="flight-top">
-                        <span>{formatDate(flight.date)}</span>
+                        <span>{displayDate(flight.date)}</span>
                         <span className="flight-number">
-                          {flight.flightNumber || "MANUAL ENTRY"}
+                          {flight.flightNumber || t("history.manual")}
                         </span>
                       </div>
                       <div className="flight-route">
                         <div>
                           <strong>{airportCode(flight.origin)}</strong>
                           <span>
-                            {flight.origin.city || flight.origin.name}
+                            {airportCity(flight.origin, locale) ||
+                              airportName(flight.origin, locale)}
                           </span>
                         </div>
                         <div className="route-line">
@@ -325,28 +348,35 @@ export default function App() {
                         <div>
                           <strong>{airportCode(flight.destination)}</strong>
                           <span>
-                            {flight.destination.city || flight.destination.name}
+                            {airportCity(flight.destination, locale) ||
+                              airportName(flight.destination, locale)}
                           </span>
                         </div>
                       </div>
                     </button>
                     <div className="flight-card-bottom">
                       <span>
-                        {flight.origin.country}{" "}
+                        {countryName(flight.origin.country, locale)}{" "}
                         <span className="light-dot">·</span>{" "}
-                        {flight.destination.country}
+                        {countryName(flight.destination.country, locale)}
                       </span>
                       <div>
                         <button
                           className="icon-button"
-                          aria-label={`Edit flight ${flight.flightNumber || airportCode(flight.origin)}`}
+                          aria-label={t("history.edit", {
+                            flight:
+                              flight.flightNumber || airportCode(flight.origin),
+                          })}
                           onClick={() => setForm(flight)}
                         >
                           <Icon name="edit" size={15} />
                         </button>
                         <button
                           className="icon-button delete"
-                          aria-label={`Delete flight ${flight.flightNumber || airportCode(flight.origin)}`}
+                          aria-label={t("history.delete", {
+                            flight:
+                              flight.flightNumber || airportCode(flight.origin),
+                          })}
                           onClick={() => {
                             setDeleting(flight);
                             setDeleteError("");
@@ -362,14 +392,14 @@ export default function App() {
             </div>
             <div className="history-footer">
               <span className="live-dot" />
-              Saved in this browser
+              {t("history.saved")}
             </div>
           </section>
           <MapBoundary>
             <Suspense
               fallback={
                 <section className="map-panel map-placeholder" role="status">
-                  Loading the map…
+                  {t("map.loading")}
                 </section>
               }
             >
@@ -384,10 +414,11 @@ export default function App() {
         <footer className="page-footer">
           <span>
             <Icon name="globe" size={15} />
-            Routes connect airports, not actual flight tracks.
+            {t("app.routesNotice")}
           </span>
           <span>
-            Made for the journey <span lang="ja">旅</span>
+            {t("app.footer")}
+            <span lang="ja">旅</span>
           </span>
         </footer>
       </main>
@@ -416,18 +447,15 @@ export default function App() {
       )}
       {deleting && (
         <Modal
-          title="Delete this flight?"
-          subtitle={`${airportCode(deleting.origin)} → ${airportCode(deleting.destination)} · ${formatDate(deleting.date)}`}
+          title={t("flight.deleteTitle")}
+          subtitle={`${airportCode(deleting.origin)} → ${airportCode(deleting.destination)} · ${displayDate(deleting.date)}`}
           onClose={() => setDeleting(null)}
           busy={deleteBusy}
         >
-          <p className="modal-copy">
-            This removes the flight from your history and map. Other flights on
-            this route will stay.
-          </p>
+          <p className="modal-copy">{t("flight.deleteHint")}</p>
           {deleteError && (
             <p className="error" role="alert">
-              {deleteError}
+              {t(deleteError)}
             </p>
           )}
           <div className="modal-actions">
@@ -436,14 +464,14 @@ export default function App() {
               disabled={deleteBusy}
               onClick={() => setDeleting(null)}
             >
-              Keep flight
+              {t("flight.keep")}
             </button>
             <button
               className="button danger"
               disabled={deleteBusy}
               onClick={remove}
             >
-              {deleteBusy ? "Deleting…" : "Delete flight"}
+              {deleteBusy ? t("flight.deleting") : t("flight.deleteButton")}
             </button>
           </div>
         </Modal>

@@ -60,3 +60,44 @@ npm run test:e2e
 ```
 
 Browser tests run against the production build with isolated browser storage on desktop and mobile viewports. The project has no `/api` endpoints or backend dependencies.
+
+## Languages
+
+Tabibito supports English and Simplified Chinese. On the first visit it selects the
+first supported browser language, falling back to English. Generic Chinese and
+Simplified Chinese locales select 简体中文; explicitly Traditional Chinese locales
+do not. Use the **Language / 语言** selector to override the browser preference.
+The choice is saved locally, separately from flight history and backups. Switching
+still works for the current session if browser preferences cannot be saved.
+
+The interface, calendar, validation messages, map controls and exported image
+captions follow the selected language. Dates are still entered and stored as
+`YYYY-MM-DD`. Airport codes and backup/image filenames remain stable.
+
+Available Chinese airport and city names come from a bundled Wikidata snapshot.
+Airport and history searches accept Chinese names and aliases as well as original
+names and IATA/ICAO codes, in either interface language. Missing or ambiguous
+translations retain their original names. Automatic pinyin transliteration is not provided. Saved
+airport snapshots and version-1 JSON backups are never rewritten by translation.
+
+Map labels prefer Simplified Chinese, then other Chinese names supplied by
+OpenFreeMap, then English or local names. Some map labels may therefore retain
+Traditional Chinese or their original language. The map provider's attribution is
+preserved in both languages and image exports.
+
+### Maintaining translations
+
+App messages live in `src/locales/en.ts` and `src/locales/zh-Hans.ts`. Use semantic
+keys, whole sentences, and i18next interpolation/plural forms rather than joining
+translated fragments. Type checking and catalog tests check message coverage and
+interpolation variables. Render errors from the stable codes in `src/errors.ts` so
+visible errors follow language changes.
+
+Airport translations have a separate, explicit update command:
+
+```sh
+npm run airports:translate
+```
+
+Normal builds do not fetch translations. See [airport data documentation](data/README.md)
+for provenance, matching rules, and offline regeneration.

@@ -1,3 +1,4 @@
+import { useI18n } from "./i18n";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Icon } from "./icons";
 export function Modal({
@@ -13,6 +14,7 @@ export function Modal({
   children: ReactNode;
   busy?: boolean;
 }) {
+  const { t } = useI18n();
   const dialog = useRef<HTMLDialogElement>(null);
   const id = useId();
   useEffect(() => {
@@ -37,7 +39,7 @@ export function Modal({
         </div>
         <button
           className="icon-button"
-          aria-label="Close dialog"
+          aria-label={t("common.close")}
           onClick={onClose}
           disabled={busy}
         >

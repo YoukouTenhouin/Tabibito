@@ -1,3 +1,4 @@
+import { useI18n, calendarNames, formatDate } from "./i18n";
 import { useEffect, useId, useRef, useState } from "react";
 import { dateSchema } from "./shared";
 
@@ -9,20 +10,6 @@ export function normalizeDate(value: string) {
   return dateSchema.safeParse(normalized).success ? normalized : value;
 }
 
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 const iso = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 const fromIso = (value: string) => new Date(`${value}T12:00:00`);
@@ -36,6 +23,8 @@ export function DateInput({
   onChange: (value: string) => void;
   optional: boolean;
 }) {
+  const { t, locale } = useI18n();
+  const { months, weekdays } = calendarNames(locale);
   const id = useId();
   const [draft, setDraft] = useState(value);
   const [open, setOpen] = useState(false);
@@ -77,7 +66,8 @@ export function DateInput({
       }}
     >
       <label htmlFor={id}>
-        Departure date {optional && <span className="optional">optional</span>}
+        {t("date.label")}{" "}
+        {optional && <span className="optional">{t("common.optional")}</span>}
       </label>
       <div className="date-entry">
         <input
@@ -97,7 +87,7 @@ export function DateInput({
           ref={toggle}
           type="button"
           className="button secondary"
-          aria-label="Choose from calendar"
+          aria-label={t("date.open")}
           aria-expanded={open}
           aria-controls={`${id}-calendar`}
           onClick={() => {
@@ -125,26 +115,26 @@ export function DateInput({
         </button>
       </div>
       <p id={`${id}-hint`} className="field-hint">
-        Choose a date or type year-month-day, e.g. 2026-7-9.
+        {t("date.hint")}
       </p>
       {open && (
         <div
           id={`${id}-calendar`}
           className="date-calendar"
           role="group"
-          aria-label="Departure calendar"
-          lang="en"
+          aria-label={t("date.calendar")}
+          lang={locale}
         >
           <div className="date-navigation">
             <button
               type="button"
-              aria-label="Previous month"
+              aria-label={t("date.previous")}
               onClick={() => moveMonth(-1)}
             >
               ‹
             </button>
             <select
-              aria-label="Month"
+              aria-label={t("date.month")}
               value={monthIndex}
               onChange={(event) =>
                 setMonth(new Date(year, Number(event.target.value), 1))
@@ -157,7 +147,7 @@ export function DateInput({
               ))}
             </select>
             <select
-              aria-label="Year"
+              aria-label={t("date.year")}
               value={year}
               onChange={(event) =>
                 setMonth(new Date(Number(event.target.value), monthIndex, 1))
@@ -177,14 +167,14 @@ export function DateInput({
             </select>
             <button
               type="button"
-              aria-label="Next month"
+              aria-label={t("date.next")}
               onClick={() => moveMonth(1)}
             >
               ›
             </button>
           </div>
           <div className="date-days">
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+            {weekdays.map((day) => (
               <span key={day} aria-hidden="true">
                 {day}
               </span>
@@ -199,7 +189,7 @@ export function DateInput({
                 <button
                   key={key}
                   type="button"
-                  aria-label={`${months[monthIndex]} ${index + 1}, ${year}`}
+                  aria-label={formatDate(key, locale, "long")}
                   aria-pressed={value === key}
                   aria-current={key === iso(new Date()) ? "date" : undefined}
                   onClick={() => choose(key)}
@@ -215,14 +205,14 @@ export function DateInput({
               className="text-button"
               onClick={() => choose(iso(new Date()))}
             >
-              Today
+              {t("date.today")}
             </button>
             <button
               type="button"
               className="text-button"
               onClick={() => choose("")}
             >
-              Clear date
+              {t("date.clear")}
             </button>
           </div>
         </div>
