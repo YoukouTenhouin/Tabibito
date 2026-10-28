@@ -1,3 +1,4 @@
+import { basemapStyleUrl, themeMapStyle } from "./map-theme";
 import { useTheme } from "./theme";
 import { errorCode, type ErrorCode } from "./errors";
 import { localizeMapStyle, mapControlLocale } from "./map-locale";
@@ -60,7 +61,7 @@ export default function FlightMap({
     try {
       instance = new maplibregl.Map({
         container: container.current!,
-        style: `https://tiles.openfreemap.org/styles/${theme === "dark" ? "dark" : "positron"}`,
+        style: basemapStyleUrl,
         center: [12, 25],
         zoom: 1.3,
         ...camera.current,
@@ -70,7 +71,7 @@ export default function FlightMap({
         transformStyle: (_, style) =>
           localizeMapStyle(
             {
-              ...style,
+              ...themeMapStyle(style, theme),
               projection: { type: latestGlobe.current ? "globe" : "mercator" },
             },
             locale,
