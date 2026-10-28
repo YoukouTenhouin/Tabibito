@@ -1,4 +1,18 @@
 export const en = {
+  "timeline.title": "Timeline",
+  "timeline.start": "Start date",
+  "timeline.end": "End date",
+  "timeline.play": "Play",
+  "timeline.pause": "Pause",
+  "timeline.replay": "Replay",
+  "timeline.restart": "Restart",
+  "timeline.speed": "Speed",
+  "timeline.beginning": "Ready to play",
+  "timeline.seek": "Flight date",
+  "timeline.invalid": "Enter valid start and end dates, with the start on or before the end.",
+  "timeline.empty": "No dated flights in this range.",
+  "timeline.undated": "Undated flights excluded: {{count}}.",
+
   "app.title": "Tabibito — Your travels, traced",
   "app.description": "Your travels, traced. A personal flight journal.",
   "app.home": "Tabibito home",

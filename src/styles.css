@@ -1500,3 +1500,29 @@ html:lang(zh-Hans) .map-caption {
 .stop-actions button { padding: 6px; }
 .map-legend { overflow-wrap: anywhere; min-width: 0; }
 .flight-select p { overflow-wrap: anywhere; }
+
+.map-with-timeline { min-width: 0; }
+.timeline-controls {
+  margin: 10px 0 0;
+  padding: 16px;
+  border: 1px solid #dce4d9;
+  border-radius: 12px;
+  background: #fff;
+  min-width: 0;
+}
+.timeline-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.timeline-dates .date-field { min-width: 0; position: relative; }
+.timeline-dates .date-entry input { min-width: 0; width: 100%; }
+.timeline-dates .date-field:has(.date-calendar) { grid-column: 1 / -1; }
+.timeline-playback { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.timeline-playback label { display: flex; align-items: center; gap: 6px; }
+.timeline-playback output { margin-left: auto; font-size: 13px; }
+.timeline-controls > input[type="range"] { width: 100%; accent-color: #487c68; }
+.timeline-controls p { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+@media (max-width: 480px) {
+  .timeline-dates { grid-template-columns: minmax(0, 1fr); }
+  .map-with-timeline .map-switch button { padding: 7px; }
+}
+@media (max-width: 760px) {
+  .map-with-timeline { grid-row: 1; }
+}

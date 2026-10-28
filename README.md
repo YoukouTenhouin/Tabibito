@@ -45,6 +45,27 @@ Airport searches run locally against the bundled OurAirports catalog, including 
 
 Distances are great-circle estimates, and route lines are not actual flight tracks. Repeated flights count separately. Map and globe exports include attribution.
 
+## Animated timeline
+
+Open **Timeline** on the map to replay dated flights matching the journal’s current
+search and year filters. Choose an inclusive start/end date range, then press
+**Play**. Routes draw from departure through each stop to arrival and remain on
+the map. Flights on the same date draw together; days without flights are skipped.
+Each flight date takes two seconds at 1× speed, with 0.5× and 2× also available.
+
+Pause preserves the current drawing. Use the date slider to show completed routes
+through a particular flight date, or **Restart** to return to the empty starting
+frame. Playback stops at the end; **Replay** starts again. Closing Timeline restores
+the ordinary filtered map, including undated records. Journal entries and overall
+statistics do not change during playback. Timeline settings are not saved.
+
+Map and globe views both support playback. The camera stays steady unless you pan,
+zoom, or choose **Show all**. Image export is available while paused or finished and
+captures the displayed frame. Playback pauses when the tab is hidden or the map is
+reloaded. Reduced-motion preferences replace progressive drawing with complete
+routes appearing at date boundaries. Dates represent journal dates, not actual
+flight times or durations; this feature does not export video.
+
 ## Airport catalog
 
 The catalog and its public-domain provenance are included in `data/`. Normal builds do not fetch airport data. To explicitly refresh it, run `npm run airports:update`, review the changed catalog and provenance, then rebuild. Existing flight snapshots are never rewritten. See [data/README.md](data/README.md).

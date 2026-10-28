@@ -18,10 +18,12 @@ export function DateInput({
   value,
   onChange,
   optional,
+  label,
 }: {
   value: string;
   onChange: (value: string) => void;
   optional: boolean;
+  label?: string;
 }) {
   const { t, locale } = useI18n();
   const { months, weekdays } = calendarNames(locale);
@@ -66,7 +68,7 @@ export function DateInput({
       }}
     >
       <label htmlFor={id}>
-        {t("date.label")}{" "}
+        {label ?? t("date.label")}{" "}
         {optional && <span className="optional">{t("common.optional")}</span>}
       </label>
       <div className="date-entry">

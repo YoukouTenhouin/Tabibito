@@ -10,6 +10,9 @@ import { airportFeatures, routeBounds, routeFeatures } from "./geometry";
 import { routeAirports, airportCode, type Flight } from "./shared";
 import { Icon } from "./icons";
 import { exportMapImage } from "./map-export";
+import { useTimeline } from "./useTimeline";
+import { useTimelineFrame } from "./useTimelineFrame";
+import { TimelineControls } from "./TimelineControls";
 
 maplibregl.setWorkerUrl(workerUrl);
 
@@ -17,8 +20,10 @@ export default function FlightMap({
   flights,
   selected,
   onSelect,
+  timelineScope,
 }: {
   flights: Flight[];
+  timelineScope: string;
   selected: string | null;
   onSelect: (id: string) => void;
 }) {
@@ -34,6 +39,11 @@ export default function FlightMap({
   const [error, setError] = useState<ErrorCode | "">("");
   const [globe, setGlobe] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const timeline = useTimeline(flights, timelineScope, ready && !error);
+  const timelineFrame = useTimelineFrame(timeline);
+  const timelineOpen = useRef(timeline.open);
+  timelineOpen.current = timeline.open;
+  const shownFlights = timeline.open ? timelineFrame.shownFlights : flights;
   const firstFit = useRef(false);
   const camera = useRef<maplibregl.CameraOptions | null>(null);
   const skipFit = useRef(false);
@@ -84,7 +94,7 @@ export default function FlightMap({
       clearTimeout(timeout);
       instance.addSource("routes", {
         type: "geojson",
-        data: routeFeatures(latest.current.flights),
+        data: routeFeatures(timelineOpen.current ? [] : latest.current.flights),
       });
       instance.addLayer({
         id: "routes",
@@ -109,9 +119,23 @@ export default function FlightMap({
         filter: ["==", ["get", "id"], ""],
         paint: { "line-color": "#bd632e", "line-width": 3, "line-opacity": 1 },
       });
+      instance.addSource("active-routes", { type: "geojson", data: routeFeatures([]) });
+      instance.addLayer({ id: "active-routes", type: "line", source: "active-routes",
+        paint: { "line-color": "#487c68", "line-width": 1.8, "line-opacity": 0.65 } });
+      instance.addLayer({ id: "active-targets", type: "line", source: "active-routes",
+        paint: { "line-width": 14, "line-opacity": 0 } });
+      instance.addLayer({ id: "active-selected", type: "line", source: "active-routes",
+        filter: ["==", ["get", "id"], ""],
+        paint: { "line-color": "#bd632e", "line-width": 3, "line-opacity": 1 } });
+      instance.on("click", "active-targets", (event) => {
+        const id = event.features?.[0]?.properties?.id;
+        if (typeof id === "string") latest.current.onSelect(id);
+      });
+      instance.on("mouseenter", "active-targets", () => { instance.getCanvas().style.cursor = "pointer"; });
+      instance.on("mouseleave", "active-targets", () => { instance.getCanvas().style.cursor = ""; });
       instance.addSource("airports", {
         type: "geojson",
-        data: airportFeatures(latest.current.flights),
+        data: airportFeatures(timelineOpen.current ? [] : latest.current.flights),
       });
       instance.addLayer({
         id: "airports",
@@ -173,39 +197,42 @@ export default function FlightMap({
   }, [attempt, locale]);
   useEffect(() => {
     const instance = map.current;
-    if (!ready || !instance || !instance.getSource("routes")) return;
+    if (!ready || !instance?.getSource("routes")) return;
     (instance.getSource("routes") as GeoJSONSource).setData(
-      routeFeatures(flights),
+      timeline.open ? timelineFrame.routes : routeFeatures(flights),
     );
-    (instance.getSource("airports") as GeoJSONSource).setData(
-      airportFeatures(flights),
-    );
-    instance.setFilter("selected-route", ["==", ["get", "id"], selected ?? ""]);
-    if (skipFit.current) {
-      skipFit.current = false;
-      return;
-    }
+  }, [flights, ready, timeline.open, timelineFrame.routes]);
+  useEffect(() => {
+    const instance = map.current;
+    if (!ready || !instance?.getSource("active-routes")) return;
+    (instance.getSource("active-routes") as GeoJSONSource).setData(timeline.open ? timelineFrame.activeRoutes : routeFeatures([]));
+    (instance.getSource("airports") as GeoJSONSource).setData(timeline.open ? timelineFrame.airports : airportFeatures(flights));
+  }, [flights, ready, timeline.open, timelineFrame.activeRoutes, timelineFrame.airports]);
+  useEffect(() => {
+    if (!ready || !map.current?.getLayer("selected-route")) return;
+    for (const layer of ["selected-route", "active-selected"])
+      map.current.setFilter(layer, ["==", ["get", "id"], selected ?? ""]);
+  }, [selected, ready]);
+  useEffect(() => {
+    const instance = map.current;
+    if (!ready || !instance || timeline.open) return;
+    if (skipFit.current) { skipFit.current = false; return; }
     const chosen = flights.find((flight) => flight.id === selected);
     if (chosen || (!firstFit.current && flights.length)) {
       const bounds = routeBounds(chosen ? [chosen] : flights);
-      if (bounds)
-        instance.fitBounds(bounds, {
-          padding: 85,
-          maxZoom: 5,
-          duration: window.matchMedia("(prefers-reduced-motion: reduce)")
-            .matches
-            ? 0
-            : 800,
-        });
+      if (bounds) instance.fitBounds(bounds, {
+        padding: 85, maxZoom: 5,
+        duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 800,
+      });
       firstFit.current = true;
     }
-  }, [flights, selected, ready]);
+  }, [flights, selected, ready, timeline.open]);
   useEffect(() => {
     if (ready && map.current?.isStyleLoaded())
       map.current.setProjection({ type: globe ? "globe" : "mercator" });
   }, [globe, ready]);
   async function downloadMap() {
-    if (!map.current || exporting) return;
+    if (!map.current || exporting || timeline.playing) return;
     const controller = new AbortController();
     exportController.current = controller;
     setExporting(true);
@@ -213,7 +240,7 @@ export default function FlightMap({
     try {
       await exportMapImage(
         map.current,
-        flights.length,
+        shownFlights.length,
         controller.signal,
         locale,
       );
@@ -231,105 +258,122 @@ export default function FlightMap({
       }
     }
   }
-  const selectedFlight = flights.find((flight) => flight.id === selected);
+  function playTimeline() {
+    if (!timeline.playing && (timeline.position === 0 || timeline.position >= timeline.dates.length)) {
+      const bounds = routeBounds(timelineFrame.rangeFlights);
+      if (bounds) map.current?.fitBounds(bounds, { padding: 85, maxZoom: 5, duration: 0 });
+    }
+    timeline.play();
+  }
+  const selectedFlight = shownFlights.find((flight) => flight.id === selected);
   return (
-    <section className="map-panel" aria-label={t("map.label")}>
-      <div ref={container} className="map-canvas" />
-      <div className="map-toolbar">
-        <div className="map-caption">
-          <span className="live-dot" />
-          {t("map.caption")}
+    <div className="map-with-timeline">
+      <section className="map-panel" aria-label={t("map.label")}>
+        <div ref={container} className="map-canvas" />
+        <div className="map-toolbar">
+          <div className="map-caption">
+            <span className="live-dot" />
+            {t("map.caption")}
+          </div>
+          <div className="map-switch" aria-label={t("map.projection")}>
+            <button type="button" aria-pressed={timeline.open} className={timeline.open ? "selected" : ""} disabled={exporting} onClick={timeline.toggle}>{t("timeline.title")}</button>
+            <button
+              aria-pressed={!globe}
+              className={!globe ? "selected" : ""}
+              onClick={() => setGlobe(false)}
+              disabled={!ready}
+            >
+              <Icon name="map" size={16} />
+              {t("map.flat")}
+            </button>
+            <button
+              aria-pressed={globe}
+              className={globe ? "selected" : ""}
+              onClick={() => setGlobe(true)}
+              disabled={!ready}
+            >
+              <Icon name="globe" size={16} />
+              {t("map.globe")}
+            </button>
+          </div>
         </div>
-        <div className="map-switch" aria-label={t("map.projection")}>
-          <button
-            aria-pressed={!globe}
-            className={!globe ? "selected" : ""}
-            onClick={() => setGlobe(false)}
-            disabled={!ready}
-          >
-            <Icon name="map" size={16} />
-            {t("map.flat")}
-          </button>
-          <button
-            aria-pressed={globe}
-            className={globe ? "selected" : ""}
-            onClick={() => setGlobe(true)}
-            disabled={!ready}
-          >
-            <Icon name="globe" size={16} />
-            {t("map.globe")}
-          </button>
+        {!ready && !error && (
+          <div className="map-loading" role="status">
+            <Icon name="globe" size={34} />
+            <span>{t("map.opening")}</span>
+          </div>
+        )}
+        {error && (
+          <div className="map-error" role="status">
+            <span>{t(error)}</span>
+            <button onClick={() => setAttempt((count) => count + 1)}>
+              {t("map.retry")}
+            </button>
+          </div>
+        )}
+        {ready && !error && !timeline.open && flights.length === 0 && (
+          <div className="map-empty">
+            <span className="compass-mark">✧</span>
+            <h3>{t("map.emptyTitle")}</h3>
+            <p>{t("map.emptyHint")}</p>
+          </div>
+        )}
+        {exportError && (
+          <div className="map-export-error" role="alert">
+            {t(exportError)}
+            <button
+              type="button"
+              aria-label={t("map.dismissError")}
+              onClick={() => setExportError("")}
+            >
+              ×
+            </button>
+          </div>
+        )}
+        <div className="map-bottom">
+          <div className="map-legend">
+            <span />
+            {selectedFlight
+              ? routeAirports(selectedFlight).map(airportCode).join(" → ")
+              : t("map.count", { count: shownFlights.length })}
+          </div>
+          <div className="map-actions">
+            <button
+              type="button"
+              className="fit-button"
+              disabled={!ready || Boolean(error) || exporting || timeline.playing}
+              onClick={downloadMap}
+              title={t("map.exportTitle")}
+            >
+              <Icon name="download" size={16} />
+              {exporting ? t("map.exporting") : t("map.export")}
+            </button>
+            <button
+              className="fit-button"
+              disabled={!ready || !(timeline.open ? timelineFrame.rangeFlights : flights).length}
+              onClick={() => {
+                const bounds = routeBounds(timeline.open ? timelineFrame.rangeFlights : flights);
+                if (bounds)
+                  map.current?.fitBounds(bounds, {
+                    padding: 85,
+                    maxZoom: 5,
+                    duration: 0,
+                  });
+              }}
+            >
+              <Icon name="layers" size={16} />
+              {t("map.showAll")}
+            </button>
+          </div>
         </div>
-      </div>
-      {!ready && !error && (
-        <div className="map-loading" role="status">
-          <Icon name="globe" size={34} />
-          <span>{t("map.opening")}</span>
-        </div>
+      </section>
+      {timeline.open && (
+        <TimelineControls
+          timeline={{ ...timeline, play: playTimeline }}
+          disabled={exporting}
+          available={ready && !error}
+        />
       )}
-      {error && (
-        <div className="map-error" role="status">
-          <span>{t(error)}</span>
-          <button onClick={() => setAttempt((count) => count + 1)}>
-            {t("map.retry")}
-          </button>
-        </div>
-      )}
-      {ready && !error && flights.length === 0 && (
-        <div className="map-empty">
-          <span className="compass-mark">✧</span>
-          <h3>{t("map.emptyTitle")}</h3>
-          <p>{t("map.emptyHint")}</p>
-        </div>
-      )}
-      {exportError && (
-        <div className="map-export-error" role="alert">
-          {t(exportError)}
-          <button
-            type="button"
-            aria-label={t("map.dismissError")}
-            onClick={() => setExportError("")}
-          >
-            ×
-          </button>
-        </div>
-      )}
-      <div className="map-bottom">
-        <div className="map-legend">
-          <span />
-          {selectedFlight
-            ? routeAirports(selectedFlight).map(airportCode).join(" → ")
-            : t("map.count", { count: flights.length })}
-        </div>
-        <div className="map-actions">
-          <button
-            type="button"
-            className="fit-button"
-            disabled={!ready || Boolean(error) || exporting}
-            onClick={downloadMap}
-            title={t("map.exportTitle")}
-          >
-            <Icon name="download" size={16} />
-            {exporting ? t("map.exporting") : t("map.export")}
-          </button>
-          <button
-            className="fit-button"
-            disabled={!ready || !flights.length}
-            onClick={() => {
-              const bounds = routeBounds(flights);
-              if (bounds)
-                map.current?.fitBounds(bounds, {
-                  padding: 85,
-                  maxZoom: 5,
-                  duration: 0,
-                });
-            }}
-          >
-            <Icon name="layers" size={16} />
-            {t("map.showAll")}
-          </button>
-        </div>
-      </div>
-    </section>
+    </div>
   );
 }

@@ -403,6 +403,7 @@ export default function App() {
             >
               <FlightMap
                 flights={visible}
+                timelineScope={JSON.stringify([search, year])}
                 selected={selected}
                 onSelect={setSelected}
               />

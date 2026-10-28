@@ -1,6 +1,20 @@
 import type { en } from "./en";
 
 export const zhHans = {
+  "timeline.title": "时间轴",
+  "timeline.start": "开始日期",
+  "timeline.end": "结束日期",
+  "timeline.play": "播放",
+  "timeline.pause": "暂停",
+  "timeline.replay": "重新播放",
+  "timeline.restart": "回到起点",
+  "timeline.speed": "速度",
+  "timeline.beginning": "准备播放",
+  "timeline.seek": "飞行日期",
+  "timeline.invalid": "请输入有效的开始和结束日期，开始日期不能晚于结束日期。",
+  "timeline.empty": "此范围内没有带日期的飞行记录。",
+  "timeline.undated": "已排除 {{count}} 条无日期记录。",
+
   "app.title": "Tabibito — 记录你的旅途",
   "app.description": "记录你的旅途。专属于你的飞行日志。",
   "app.home": "Tabibito 首页",
