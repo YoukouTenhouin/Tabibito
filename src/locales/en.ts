@@ -1,4 +1,8 @@
 export const en = {
+  "theme.label": "Theme",
+  "theme.system": "System",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
   "history.open": "History",
   "history.close": "Close history",
   "timeline.title": "Timeline",

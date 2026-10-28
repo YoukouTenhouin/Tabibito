@@ -1,3 +1,4 @@
+import { useTheme } from "./theme";
 import { errorCode, type ErrorCode } from "./errors";
 import { localizeMapStyle, mapControlLocale } from "./map-locale";
 import { useI18n } from "./i18n";
@@ -28,6 +29,7 @@ export default function FlightMap({
   onSelect: (id: string) => void;
 }) {
   const { t, locale } = useI18n();
+  const { theme } = useTheme();
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapInstance | null>(null);
   const latest = useRef({ flights, selected, onSelect });
@@ -58,7 +60,7 @@ export default function FlightMap({
     try {
       instance = new maplibregl.Map({
         container: container.current!,
-        style: "https://tiles.openfreemap.org/styles/positron",
+        style: `https://tiles.openfreemap.org/styles/${theme === "dark" ? "dark" : "positron"}`,
         center: [12, 25],
         zoom: 1.3,
         ...camera.current,
@@ -101,7 +103,7 @@ export default function FlightMap({
         type: "line",
         source: "routes",
         paint: {
-          "line-color": "#487c68",
+          "line-color": (theme === "dark" ? "#91c9a9" : "#487c68"),
           "line-width": 1.8,
           "line-opacity": 0.65,
         },
@@ -117,16 +119,16 @@ export default function FlightMap({
         type: "line",
         source: "routes",
         filter: ["==", ["get", "id"], ""],
-        paint: { "line-color": "#bd632e", "line-width": 3, "line-opacity": 1 },
+        paint: { "line-color": (theme === "dark" ? "#e9a16d" : "#bd632e"), "line-width": 3, "line-opacity": 1 },
       });
       instance.addSource("active-routes", { type: "geojson", data: routeFeatures([]) });
       instance.addLayer({ id: "active-routes", type: "line", source: "active-routes",
-        paint: { "line-color": "#487c68", "line-width": 1.8, "line-opacity": 0.65 } });
+        paint: { "line-color": (theme === "dark" ? "#91c9a9" : "#487c68"), "line-width": 1.8, "line-opacity": 0.65 } });
       instance.addLayer({ id: "active-targets", type: "line", source: "active-routes",
         paint: { "line-width": 14, "line-opacity": 0 } });
       instance.addLayer({ id: "active-selected", type: "line", source: "active-routes",
         filter: ["==", ["get", "id"], ""],
-        paint: { "line-color": "#bd632e", "line-width": 3, "line-opacity": 1 } });
+        paint: { "line-color": (theme === "dark" ? "#e9a16d" : "#bd632e"), "line-width": 3, "line-opacity": 1 } });
       instance.on("click", "active-targets", (event) => {
         const id = event.features?.[0]?.properties?.id;
         if (typeof id === "string") latest.current.onSelect(id);
@@ -143,8 +145,8 @@ export default function FlightMap({
         source: "airports",
         paint: {
           "circle-radius": 4.5,
-          "circle-color": "#214f43",
-          "circle-stroke-color": "#ffffff",
+          "circle-color": (theme === "dark" ? "#91c9a9" : "#214f43"),
+          "circle-stroke-color": (theme === "dark" ? "#1b2621" : "#ffffff"),
           "circle-stroke-width": 2,
         },
       });
@@ -160,8 +162,8 @@ export default function FlightMap({
           "text-anchor": "top",
         },
         paint: {
-          "text-color": "#244b42",
-          "text-halo-color": "#ffffff",
+          "text-color": (theme === "dark" ? "#e5eee8" : "#244b42"),
+          "text-halo-color": (theme === "dark" ? "#1b2621" : "#ffffff"),
           "text-halo-width": 2,
         },
       });
@@ -197,7 +199,7 @@ export default function FlightMap({
       instance.remove();
       map.current = null;
     };
-  }, [attempt, locale]);
+  }, [attempt, locale, theme]);
   useEffect(() => {
     const instance = map.current;
     if (!ready || !instance?.getSource("routes")) return;
@@ -246,6 +248,7 @@ export default function FlightMap({
         shownFlights.length,
         controller.signal,
         locale,
+        theme,
       );
     } catch (error) {
       if (!controller.signal.aborted)

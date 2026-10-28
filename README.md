@@ -122,3 +122,7 @@ npm run airports:translate
 
 Normal builds do not fetch translations. See [airport data documentation](data/README.md)
 for provenance, matching rules, and offline regeneration.
+
+## Appearance
+
+Use the theme button in the header to choose System, Light, or Dark. System is the default and follows your device. Your choice is saved locally, separately from backups. Dark mode includes the map, globe, and exported images. Switching themes reloads the map while retaining its camera and pauses timeline playback at its current position.

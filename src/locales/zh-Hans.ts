@@ -1,6 +1,7 @@
 import type { en } from "./en";
 
 export const zhHans = {
+ "theme.label": "主题", "theme.system": "跟随系统", "theme.light": "浅色", "theme.dark": "深色",
   "history.open": "历史",
   "history.close": "关闭历史记录",
   "timeline.title": "时间轴",

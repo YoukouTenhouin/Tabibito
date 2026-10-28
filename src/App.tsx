@@ -1,3 +1,4 @@
+import { ThemeSwitcher } from "./ThemeSwitcher";
 import { useI18n, formatDate } from "./i18n";
 import {
   Component,
@@ -136,7 +137,7 @@ export default function App() {
 
         <div className="header-actions">
           <button className="button subtle history-toggle" aria-expanded={historyOpen} aria-controls="flight-history" onClick={() => setHistoryOpen(true)}>{t("history.open")}</button>
-          <LanguageSwitcher />
+          <ThemeSwitcher /><LanguageSwitcher />
           <button className="button subtle backup-button" aria-label={t("backup.open")} title={t("backup.open")} onClick={() => setBackupOpen(true)}>
             <Icon name="download" size={17} />
             <span>{t("backup.open")}</span>

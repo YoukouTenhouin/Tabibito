@@ -1,3 +1,4 @@
+import type { Theme } from "./theme";
 import { i18n, type Locale } from "./i18n";
 import { AppError } from "./errors";
 import * as maplibregl from "maplibre-gl";
@@ -9,6 +10,7 @@ export async function exportMapImage(
   flightCount: number,
   signal: AbortSignal,
   locale: Locale,
+  theme: Theme = "light",
 ): Promise<void> {
   const t = i18n.getFixedT(locale);
   const { width, height } = source.getCanvas().getBoundingClientRect();
@@ -73,10 +75,10 @@ export async function exportMapImage(
     image.height = rendered.height + 112;
     const context = image.getContext("2d");
     if (!context) throw new AppError("errors.exportCanvas");
-    context.fillStyle = "#f7f8f5";
+    context.fillStyle = theme === "dark" ? "#121a17" : "#f7f8f5";
     context.fillRect(0, 0, image.width, image.height);
     context.drawImage(rendered, 0, 0);
-    context.fillStyle = "#214f43";
+    context.fillStyle = theme === "dark" ? "#e5eee8" : "#214f43";
     context.font = "28px sans-serif";
     context.fillText(
       t("map.exportCaption", { count: flightCount }),
@@ -84,7 +86,7 @@ export async function exportMapImage(
       rendered.height + 40,
       image.width - 48,
     );
-    context.fillStyle = "#526451";
+    context.fillStyle = theme === "dark" ? "#a4b4a9" : "#526451";
     context.font = "20px sans-serif";
     context.fillText(
       "OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors",

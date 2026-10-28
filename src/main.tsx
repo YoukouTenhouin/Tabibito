@@ -1,3 +1,4 @@
+import { ThemeProvider } from "./theme";
 import { downloadBackup } from "./backup";
 import { errorCode, type ErrorCode } from "./errors";
 import { StrictMode, Component, useState, type ReactNode } from "react";
@@ -48,9 +49,9 @@ class ErrorBoundary extends Component<
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <I18nextProvider i18n={i18n}>
-      <ErrorBoundary>
+      <ThemeProvider><ErrorBoundary>
         <App />
-      </ErrorBoundary>
+      </ErrorBoundary></ThemeProvider>
     </I18nextProvider>
   </StrictMode>,
 );
