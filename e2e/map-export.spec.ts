@@ -1,3 +1,4 @@
+import { openHistory, closeHistory } from "./helpers";
 import { backupFor, restore } from "./helpers";
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
@@ -36,6 +37,7 @@ test.beforeEach(async ({ page }) => {
 test("downloads rendered map and globe PNGs with routes and a credit footer", async ({
   page,
 }, testInfo) => {
+  await openHistory(page);
   await page.getByRole("button", { name: "Show LHR to SFO on map" }).click();
   await page.getByRole("button", { name: "Show all", exact: true }).click();
   for (const projection of ["Map", "Globe"]) {
@@ -117,9 +119,11 @@ test("export failure is recoverable and leaves flight history available", async 
   });
   await page.getByRole("button", { name: "Export map", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("could not encode");
+  await openHistory(page);
   await expect(
     page.getByRole("button", { name: "Show LHR to SFO on map" }),
   ).toBeVisible();
+  await closeHistory(page);
   const downloaded = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export map", exact: true }).click();
   await downloaded;

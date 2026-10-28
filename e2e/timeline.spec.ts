@@ -1,3 +1,4 @@
+import { openHistory, closeHistory } from "./helpers";
 import { test, expect } from "@playwright/test";
 import { backupFor, restore } from "./helpers";
 import { input, hnd, sfo } from "../tests/fixtures";
@@ -55,12 +56,16 @@ test("validates ranges, resets on filters, and does not reset on an unchanged fo
   await controls.getByLabel("Start date", { exact: true }).fill("2026-01-01");
   await expect(controls.locator("p[role=status]")).toContainText("Enter valid");
   await expect(controls.getByRole("button", { name: "Play", exact: true })).toBeDisabled();
+  await openHistory(page);
   await page.getByLabel("Filter by year").selectOption("2024");
+  await closeHistory(page);
   await expect(controls.getByLabel("Start date", { exact: true })).toHaveValue("2024-07-09");
   await expect(controls.getByLabel("End date", { exact: true })).toHaveValue("2024-07-09");
   await controls.getByRole("slider").fill("1");
   await expect(page.locator(".map-legend")).toContainText("2 flights");
+  await openHistory(page);
   await page.getByLabel("Filter by year").selectOption("undated");
+  await closeHistory(page);
   await expect(controls.getByRole("button", { name: "Play", exact: true })).toBeDisabled();
   await expect(page.locator(".flight-card")).toHaveCount(1);
 });
@@ -72,6 +77,7 @@ test("supports reduced motion and localized controls", async ({ page }) => {
   await expect(page.locator(".map-legend")).toContainText("0 flights");
   await expect(page.locator(".map-legend")).toContainText("2 flights", { timeout: 4000 });
   await controls.getByRole("button", { name: "Pause", exact: true }).click();
+  await closeHistory(page);
   await page.getByLabel("Language", { exact: true }).selectOption("zh-Hans");
   await expect(page.getByRole("button", { name: "播放", exact: true })).toBeVisible();
   await expect(page.getByLabel("开始日期", { exact: true })).toHaveValue("2024-07-09");
@@ -119,6 +125,7 @@ test("pauses on map failure and preserves playback progress through retry", asyn
   await expect(page.locator(".map-legend")).toContainText("2 flights");
   const styleUrl = "https://tiles.openfreemap.org/styles/positron";
   await page.route(styleUrl, route => route.abort());
+  await closeHistory(page);
   await page.getByLabel("Language", { exact: true }).selectOption("zh-Hans");
   await expect(page.locator(".map-error")).toBeVisible();
   await expect(page.getByRole("button", { name: "播放", exact: true })).toBeDisabled();

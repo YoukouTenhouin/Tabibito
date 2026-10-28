@@ -179,7 +179,10 @@ export default function FlightMap({
       setError("");
       setReady(true);
     });
+    const resizeObserver = new ResizeObserver(() => instance.resize());
+    resizeObserver.observe(container.current!);
     return () => {
+      resizeObserver.disconnect();
       clearTimeout(timeout);
       exportController.current?.abort();
       // A pan can leave tiles loading even after the map has initialized.
@@ -271,10 +274,6 @@ export default function FlightMap({
       <section className="map-panel" aria-label={t("map.label")}>
         <div ref={container} className="map-canvas" />
         <div className="map-toolbar">
-          <div className="map-caption">
-            <span className="live-dot" />
-            {t("map.caption")}
-          </div>
           <div className="map-switch" aria-label={t("map.projection")}>
             <button type="button" aria-pressed={timeline.open} className={timeline.open ? "selected" : ""} disabled={exporting} onClick={timeline.toggle}>{t("timeline.title")}</button>
             <button
@@ -309,13 +308,6 @@ export default function FlightMap({
             <button onClick={() => setAttempt((count) => count + 1)}>
               {t("map.retry")}
             </button>
-          </div>
-        )}
-        {ready && !error && !timeline.open && flights.length === 0 && (
-          <div className="map-empty">
-            <span className="compass-mark">✧</span>
-            <h3>{t("map.emptyTitle")}</h3>
-            <p>{t("map.emptyHint")}</p>
           </div>
         )}
         {exportError && (
@@ -366,14 +358,14 @@ export default function FlightMap({
             </button>
           </div>
         </div>
+        {timeline.open && (
+          <TimelineControls
+            timeline={{ ...timeline, play: playTimeline }}
+            disabled={exporting}
+            available={ready && !error}
+          />
+        )}
       </section>
-      {timeline.open && (
-        <TimelineControls
-          timeline={{ ...timeline, play: playTimeline }}
-          disabled={exporting}
-          available={ready && !error}
-        />
-      )}
     </div>
   );
 }

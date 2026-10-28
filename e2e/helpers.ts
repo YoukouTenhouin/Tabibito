@@ -30,3 +30,12 @@ export async function restore(page: Page, backup: Backup) {
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
+
+export async function openHistory(page: Page) {
+  const toggle = page.locator(".history-toggle");
+  if (await toggle.isVisible() && await toggle.getAttribute("aria-expanded") !== "true") await toggle.click();
+}
+export async function closeHistory(page: Page) {
+  const close = page.locator(".history-close");
+  if (await close.isVisible()) await close.click();
+}

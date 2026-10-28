@@ -1,3 +1,4 @@
+import { openHistory } from "./helpers";
 import { backupFor, backupFile, restore } from "./helpers";
 import { expect, test } from "@playwright/test";
 import { input, prg, lhr, hnd, sfo } from "../tests/fixtures";
@@ -41,6 +42,7 @@ test("map and globe render transatlantic and date-line routes", async ({
   await expect(
     page.getByRole("button", { name: "Globe", exact: true }),
   ).toBeEnabled();
+  await openHistory(page);
   await page.getByRole("button", { name: "Show HND to SFO on map" }).click();
   await page.getByRole("button", { name: "Globe", exact: true }).click();
   await expect(
@@ -56,6 +58,7 @@ test("map and globe render transatlantic and date-line routes", async ({
     page.getByRole("button", { name: "Map", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Show all", exact: true }).click();
+  await openHistory(page);
   await expect(
     page.getByRole("button", { name: "Show LHR to SFO on map" }),
   ).toBeVisible();
@@ -74,23 +77,30 @@ test("manual journey, history filters, editing and deletion", async ({
   await page.getByRole("option").filter({ hasText: "LHR" }).first().click();
   await page.getByRole("button", { name: "Save flight", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await openHistory(page);
   await expect(
     page.getByRole("button", { name: "Show PRG to LHR on map" }),
   ).toBeVisible();
   await page.reload();
+  await openHistory(page);
   await expect(page.getByText("BA853", { exact: true })).toBeVisible();
+  await openHistory(page);
   await page.getByLabel("Search flight history").fill("Tokyo");
   await expect(page.getByText("No matching journeys")).toBeVisible();
   await page.getByRole("button", { name: "Clear filters" }).click();
+  await openHistory(page);
   await page.getByRole("button", { name: "Edit flight BA853" }).click();
   await page.getByLabel("Departure date").fill("2023-10-15");
   await page.getByRole("button", { name: "Save changes" }).click();
+  await openHistory(page);
   await expect(page.getByText("Oct 15, 2023")).toBeVisible();
+  await openHistory(page);
   await page.getByRole("button", { name: "Delete flight BA853" }).click();
   await page
     .getByRole("button", { name: "Delete flight", exact: true })
     .click();
-  await expect(page.getByText("Your story starts here")).toBeVisible();
+  await openHistory(page);
+  await expect(page.getByText("No flights yet")).toBeVisible();
 });
 
 test("backup export and restore preview, cancel and confirm", async ({
@@ -156,8 +166,9 @@ test("browser contexts are isolated and imports reject stale previews across tab
   try {
     const isolatedPage = await separate.newPage();
     await isolatedPage.goto("http://localhost:3100/");
+    await openHistory(isolatedPage);
     await expect(
-      isolatedPage.getByText("Your story starts here"),
+      isolatedPage.getByText("No flights yet"),
     ).toBeVisible();
   } finally {
     await separate.close();

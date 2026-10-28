@@ -1,3 +1,4 @@
+import { openHistory, closeHistory } from "./helpers";
 import { expect, test, type Page } from "@playwright/test";
 import { backupFile, backupFor } from "./helpers";
 import { input } from "../tests/fixtures";
@@ -72,6 +73,7 @@ test("detects Chinese, remembers a manual choice and fits the viewport", async (
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  await closeHistory(page);
   await page.getByLabel("语言", { exact: true }).selectOption("en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(
@@ -79,6 +81,7 @@ test("detects Chinese, remembers a manual choice and fits the viewport", async (
   ).toBeVisible();
   await page.reload();
   await expect(page.getByLabel("Language", { exact: true })).toHaveValue("en");
+  await closeHistory(page);
   await page.getByLabel("Language", { exact: true }).selectOption("zh-Hans");
   await page.reload();
   await expect(page.getByLabel("语言", { exact: true })).toHaveValue("zh-Hans");
@@ -116,28 +119,37 @@ test("Chinese airport search, calendar, validation, editing and deletion", async
   await page.getByLabel("出发日期", { exact: false }).first().fill("2024/2/29");
   await page.getByRole("button", { name: "保存飞行记录", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await openHistory(page);
   await expect(page.getByText("2024年2月29日", { exact: true })).toBeVisible();
   await expect(page.locator(".flight-card")).toContainText("伦敦");
+  await openHistory(page);
   await page.getByLabel("搜索飞行记录").fill("伦敦");
   await expect(page.locator(".flight-card")).toHaveCount(1);
+  await closeHistory(page);
   await page.getByLabel("语言", { exact: true }).selectOption("en");
+  await openHistory(page);
   await expect(page.getByLabel("Search flight history")).toHaveValue("伦敦");
   await expect(page.locator(".flight-card")).toContainText("London");
+  await closeHistory(page);
   await page.getByLabel("Language", { exact: true }).selectOption("zh-Hans");
+  await openHistory(page);
   await page.getByRole("button", { name: "编辑航班 BA853" }).click();
   await page
     .getByLabel("出发日期", { exact: false })
     .first()
     .fill("2025-01-02");
   await page.getByRole("button", { name: "保存修改" }).click();
+  await openHistory(page);
   await expect(page.getByText("2025年1月2日", { exact: true })).toBeVisible();
   await page.screenshot({
     path: testInfo.outputPath("chinese-journal.png"),
     fullPage: true,
   });
+  await openHistory(page);
   await page.getByRole("button", { name: "删除航班 BA853" }).click();
   await page.getByRole("button", { name: "删除记录", exact: true }).click();
-  await expect(page.getByText("你的故事从这里开始")).toBeVisible();
+  await openHistory(page);
+  await expect(page.getByText("暂无航班")).toBeVisible();
 });
 
 test("Chinese backups retain canonical version-2 records and report invalid files", async ({
@@ -203,21 +215,26 @@ test("switches map controls and preserves globe selection; exports a Chinese cap
     .setInputFiles(backupFile(backupFor([input])));
   await page.getByLabel("使用此备份替换现有飞行记录").check();
   await page.getByRole("button", { name: "替换记录", exact: true }).click();
+  await openHistory(page);
   await page.getByRole("button", { name: "在地图上显示 PRG 至 LHR" }).click();
   await expect(
     page.getByRole("button", { name: "地球", exact: true }),
   ).toBeEnabled();
   await page.getByRole("button", { name: "地球", exact: true }).click();
+  await closeHistory(page);
   await page.getByLabel("语言", { exact: true }).selectOption("en");
   await expect(
     page.getByRole("button", { name: "Globe", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
+  await openHistory(page);
   await expect(
     page.getByRole("button", { name: "Show PRG to LHR on map" }),
   ).toHaveAttribute("aria-pressed", "true");
+  await closeHistory(page);
   await expect(
     page.getByRole("button", { name: "Zoom in", exact: true }),
   ).toBeVisible();
+  await closeHistory(page);
   await page.getByLabel("Language", { exact: true }).selectOption("zh-Hans");
   await expect(
     page.getByRole("button", { name: "放大", exact: true }),
@@ -257,6 +274,7 @@ test("storage preferences and map failures do not prevent the Chinese journal", 
   });
   await page.goto("/");
   await expect(page.locator(".map-error")).toContainText("此设备无法启动地图");
+  await closeHistory(page);
   await page.getByLabel("语言", { exact: true }).selectOption("en");
   await expect(page.locator(".map-error")).toContainText(
     "The map could not start",

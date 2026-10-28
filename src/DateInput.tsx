@@ -19,11 +19,13 @@ export function DateInput({
   onChange,
   optional,
   label,
+  showHint = true,
 }: {
   value: string;
   onChange: (value: string) => void;
   optional: boolean;
   label?: string;
+  showHint?: boolean;
 }) {
   const { t, locale } = useI18n();
   const { months, weekdays } = calendarNames(locale);
@@ -77,7 +79,7 @@ export function DateInput({
           type="text"
           placeholder="YYYY-MM-DD"
           autoComplete="off"
-          aria-describedby={`${id}-hint`}
+          aria-describedby={showHint ? `${id}-hint` : undefined}
           value={draft}
           onChange={(event) => {
             setDraft(event.target.value);
@@ -116,9 +118,9 @@ export function DateInput({
           </svg>
         </button>
       </div>
-      <p id={`${id}-hint`} className="field-hint">
+      {showHint && <p id={`${id}-hint`} className="field-hint">
         {t("date.hint")}
-      </p>
+      </p>}
       {open && (
         <div
           id={`${id}-calendar`}

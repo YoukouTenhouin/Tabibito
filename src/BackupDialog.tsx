@@ -71,6 +71,7 @@ export function BackupDialog({
       onClose={onClose}
       busy={busy}
     >
+      <p className="backup-storage-note">{t("app.notice")}</p>
       <section className="backup-section">
         <div className="section-icon">
           <Icon name="download" />

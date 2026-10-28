@@ -61,7 +61,6 @@ export function FlightForm({
   return (
     <Modal
       title={flight ? t("flight.editTitle") : t("flight.addTitle")}
-      subtitle={t("flight.subtitle")}
       onClose={onClose}
       busy={Boolean(busy)}
     >

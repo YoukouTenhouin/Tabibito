@@ -1,6 +1,8 @@
 import type { en } from "./en";
 
 export const zhHans = {
+  "history.open": "历史",
+  "history.close": "关闭历史记录",
   "timeline.title": "时间轴",
   "timeline.start": "开始日期",
   "timeline.end": "结束日期",
@@ -49,10 +51,10 @@ export const zhHans = {
   "history.loading": "正在加载旅程…",
   "history.unavailable": "无法读取飞行记录",
   "history.noMatches": "没有匹配的旅程",
-  "history.emptyTitle": "你的故事从这里开始",
+  "history.emptyTitle": "暂无航班",
   "history.retryHint": "请重试加载飞行记录。",
   "history.searchHint": "请更换搜索词或选择其他年份。",
-  "history.emptyHint": "添加第一次飞行，在地图上留下新的足迹。",
+  "history.emptyHint": "添加您的首次航班。",
   "history.clearFilters": "清除筛选",
   "history.firstFlight": "添加第一次飞行",
   "history.manual": "手动录入",
@@ -129,8 +131,6 @@ export const zhHans = {
   "map.globe": "地球",
   "map.opening": "正在展开你的世界…",
   "map.retry": "重试加载地图",
-  "map.emptyTitle": "世界充满可能",
-  "map.emptyHint": "你的旅程将在这里呈现。",
   "map.dismissError": "关闭导出错误提示",
   "map.count_one": "地图上有 {{count}} 次飞行",
   "map.count_other": "地图上有 {{count}} 次飞行",

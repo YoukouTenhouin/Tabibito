@@ -29,8 +29,8 @@ export function TimelineControls({
   return (
     <fieldset className="timeline-controls" disabled={disabled} aria-label={t("timeline.title")}>
       <div className="timeline-dates">
-        <DateInput label={t("timeline.start")} value={tl.start} onChange={tl.setStart} optional={false} />
-        <DateInput label={t("timeline.end")} value={tl.end} onChange={tl.setEnd} optional={false} />
+        <DateInput label={t("timeline.start")} value={tl.start} onChange={tl.setStart} optional={false} showHint={false} />
+        <DateInput label={t("timeline.end")} value={tl.end} onChange={tl.setEnd} optional={false} showHint={false} />
       </div>
       <div className="timeline-playback">
         <button
@@ -64,7 +64,7 @@ export function TimelineControls({
         onChange={e => tl.seek(Number(e.target.value))}
       />
       {message && <p role="status">{t(message)}</p>}
-      <p>{t("timeline.undated", { count: undated })}</p>
+      {undated > 0 && <p>{t("timeline.undated", { count: undated })}</p>}
     </fieldset>
   );
 }

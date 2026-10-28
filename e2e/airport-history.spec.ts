@@ -1,3 +1,4 @@
+import { openHistory } from "./helpers";
 import { test, expect } from "@playwright/test";
 test("historical selection survives date changes and saving", async ({page}) => {
   await page.goto('/');
@@ -13,6 +14,7 @@ test("historical selection survives date changes and saving", async ({page}) => 
   await page.getByRole('button', {name:'Save flight', exact:true}).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.reload();
+  await openHistory(page);
   await page.getByRole('button', {name:'Edit flight TAO'}).click();
   await expect(page.getByRole('combobox', {name:'Departure airport'})).toHaveValue(/Liuting/);
 });

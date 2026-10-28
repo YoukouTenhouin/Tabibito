@@ -1,3 +1,4 @@
+import { openHistory, closeHistory } from "./helpers";
 import { expect, test } from "@playwright/test";
 
 test.use({ locale: "ja-JP" });
@@ -58,6 +59,8 @@ test("unpadded typed dates normalize and invalid calendar dates cannot be saved"
   await expect(page.getByRole("alert")).toContainText("valid calendar date");
   await date.fill("2024-2-29");
   await page.getByRole("button", { name: "Save flight", exact: true }).click();
+  await openHistory(page);
   await expect(page.getByText("Feb 29, 2024")).toBeVisible();
+  await closeHistory(page);
   await expect(page.getByRole("dialog")).toBeHidden();
 });
