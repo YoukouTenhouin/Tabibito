@@ -1,3 +1,4 @@
+import { addHistoricalAirports } from "./airport-history.mjs";
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
@@ -92,7 +93,7 @@ export function parseAirportCsv(csv) {
 }
 
 export async function writeCatalog(csv, directory = "data") {
-  const airports = parseAirportCsv(csv);
+  const airports = addHistoricalAirports(parseAirportCsv(csv));
   await mkdir(directory, { recursive: true });
   await writeFile(
     join(directory, "airports.json.tmp"),
@@ -107,6 +108,7 @@ export async function writeCatalog(csv, directory = "data") {
     JSON.stringify(
       {
         source,
+        historyOverlay: "airport-history.json",
         license: "Public domain",
         downloadedAt: new Date().toISOString(),
         count: airports.length,

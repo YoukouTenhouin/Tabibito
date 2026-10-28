@@ -1,0 +1,194 @@
+{
+  "coverageFrom": "1990-01-01",
+  "facilities": [
+    {
+      "airport": {
+        "id": "CN-0164",
+        "name": "Qingdao Liuting International Airport",
+        "city": "Qingdao (Chengyang)",
+        "country": "CN",
+        "iata": "TAO",
+        "icao": "ZSQD",
+        "latitude": 36.265837,
+        "longitude": 120.37459,
+        "closed": true
+      },
+      "zhName": "青岛流亭国际机场",
+      "source": "https://ourairports.com/airports/CN-0164/"
+    },
+    {
+      "airport": {
+        "id": "CN-0001",
+        "name": "Old Guangzhou Baiyun International Airport",
+        "city": "Guangzhou (Baiyun)",
+        "country": "CN",
+        "iata": "CAN",
+        "icao": "ZGGG",
+        "latitude": 23.1842,
+        "longitude": 113.265999,
+        "closed": true
+      },
+      "zhName": "广州旧白云国际机场",
+      "source": "https://ourairports.com/airports/CN-0001/"
+    },
+    {
+      "airport": {
+        "id": "CN-0032",
+        "name": "Kunming Wujiaba International Airport",
+        "city": "Kunming",
+        "country": "CN",
+        "iata": "KMG",
+        "icao": "ZPPP",
+        "latitude": 24.9924,
+        "longitude": 102.7435,
+        "closed": true
+      },
+      "zhName": "昆明巫家坝国际机场",
+      "source": "https://ourairports.com/airports/CN-0032/"
+    },
+    {
+      "airport": {
+        "id": "HK-0099",
+        "name": "Hong Kong International Airport Kai Tak",
+        "city": "Kowloon City",
+        "country": "HK",
+        "iata": "HKG",
+        "icao": "VHHH",
+        "latitude": 22.320304,
+        "longitude": 114.198074,
+        "closed": true
+      },
+      "zhName": "香港启德机场",
+      "source": "https://ourairports.com/airports/HK-0099/"
+    },
+    {
+      "airport": {
+        "id": "CN-0036",
+        "name": "Shantou Waisha Airport",
+        "city": "Shantou (Longhu)",
+        "country": "CN",
+        "iata": "SWA",
+        "icao": "ZGOW",
+        "latitude": 23.426901,
+        "longitude": 116.762001,
+        "closed": false
+      },
+      "zhName": "汕头外砂机场",
+      "source": "https://ourairports.com/airports/CN-0036/"
+    }
+  ],
+  "periods": [
+    {
+      "airportId": "CN-0164",
+      "iata": "TAO",
+      "icao": "ZSQD",
+      "fromDate": "1990-01-01",
+      "untilDate": "2021-08-12",
+      "source": "https://www.qingdao.gov.cn/zwgk/xxgk/jtys/ywfl/ysgl/202107/t20210712_3171203.shtml"
+    },
+    {
+      "airportId": "ZSQD",
+      "iata": "TAO",
+      "icao": "ZSQD",
+      "fromDate": "2021-08-12",
+      "untilDate": null,
+      "source": "https://www.qingdao.gov.cn/zwgk/xxgk/jtys/ywfl/ysgl/202107/t20210712_3171203.shtml"
+    },
+    {
+      "airportId": "CN-0001",
+      "iata": "CAN",
+      "icao": "ZGGG",
+      "fromDate": "1990-01-01",
+      "untilDate": "2004-08-05",
+      "source": "https://www.gdairport.com/gyjt/lsyg/content/post_202.html"
+    },
+    {
+      "airportId": "ZGGG",
+      "iata": "CAN",
+      "icao": "ZGGG",
+      "fromDate": "2004-08-05",
+      "untilDate": null,
+      "source": "https://www.gdairport.com/gyjt/lsyg/content/post_202.html"
+    },
+    {
+      "airportId": "CN-0032",
+      "iata": "KMG",
+      "icao": "ZPPP",
+      "fromDate": "1990-01-01",
+      "untilDate": "2012-06-28",
+      "source": "https://km.ynairport.com/notice/682.jhtml"
+    },
+    {
+      "airportId": "ZPPP",
+      "iata": "KMG",
+      "icao": "ZPPP",
+      "fromDate": "2012-06-28",
+      "untilDate": null,
+      "source": "https://km.ynairport.com/notice/682.jhtml"
+    },
+    {
+      "airportId": "HK-0099",
+      "iata": "HKG",
+      "icao": "VHHH",
+      "fromDate": "1990-01-01",
+      "untilDate": "1998-07-07",
+      "source": "https://www.info.gov.hk/gia/general/199807/06/0706004.htm"
+    },
+    {
+      "airportId": "VHHH",
+      "iata": "HKG",
+      "icao": "VHHH",
+      "fromDate": "1998-07-06",
+      "untilDate": null,
+      "source": "https://www.info.gov.hk/gia/general/199807/06/0706004.htm"
+    },
+    {
+      "airportId": "CN-0036",
+      "iata": "SWA",
+      "icao": "ZGOW",
+      "fromDate": "1990-01-01",
+      "untilDate": "2011-12-15",
+      "source": "https://www.gdairport.com/gyjt/lsyg/content/post_202.html"
+    },
+    {
+      "airportId": "ZGOW",
+      "iata": "SWA",
+      "icao": "ZGOW",
+      "fromDate": "2011-12-15",
+      "untilDate": null,
+      "source": "https://www.gdairport.com/gyjt/lsyg/content/post_202.html"
+    },
+    {
+      "airportId": "LTBA",
+      "iata": "IST",
+      "icao": "LTBA",
+      "fromDate": "1990-01-01",
+      "untilDate": "2019-04-07",
+      "source": "https://blog.turkishairlines.com/en/mega-move-the-story-of-turkish-airlines-great-migration/"
+    },
+    {
+      "airportId": "LTBA",
+      "iata": "ISL",
+      "icao": "LTBA",
+      "fromDate": "2019-04-06",
+      "untilDate": null,
+      "source": "https://blog.turkishairlines.com/en/mega-move-the-story-of-turkish-airlines-great-migration/"
+    },
+    {
+      "airportId": "LTFM",
+      "iata": "ISL",
+      "icao": "LTFM",
+      "fromDate": "2018-10-29",
+      "untilDate": "2019-04-07",
+      "source": "https://blog.turkishairlines.com/en/mega-move-the-story-of-turkish-airlines-great-migration/"
+    },
+    {
+      "airportId": "LTFM",
+      "iata": "IST",
+      "icao": "LTFM",
+      "fromDate": "2019-04-06",
+      "untilDate": null,
+      "source": "https://blog.turkishairlines.com/en/mega-move-the-story-of-turkish-airlines-great-migration/"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { addHistoricalTranslations } from "./airport-history.mjs";
 import { createHash } from "node:crypto";
 import { readFile, writeFile, rename } from "node:fs/promises";
 import * as OpenCC from "opencc-js";
@@ -284,6 +285,10 @@ export async function writeTranslations(
     throw new Error(
       "Translation coverage dropped by over 10%; existing data was not replaced.",
     );
+  addHistoricalTranslations(result.airports);
+  result.coverage.total = catalog.length;
+  result.coverage.translated = Object.keys(result.airports).length;
+  result.coverage.names = Object.values(result.airports).filter(a => a.name).length;
   const output = {
     metadata: {
       source: endpoint,

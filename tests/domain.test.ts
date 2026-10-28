@@ -91,7 +91,7 @@ describe("airport search", () => {
   const catalog = new AirportCatalog(airports);
   it("finds airports by IATA, ICAO, city and accent-insensitive names", () => {
     for (const query of ["PRG", "lkpr", "Prague", "vaclav"])
-      expect(catalog.search(query)[0]).toEqual(prg);
+      expect(catalog.search(query)[0]?.airport).toEqual(prg);
     expect(catalog.search("")).toEqual([]);
     expect(catalog.search("nonexistent airport")).toEqual([]);
   });

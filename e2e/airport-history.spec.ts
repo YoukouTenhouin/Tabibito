@@ -1,0 +1,18 @@
+import { test, expect } from "@playwright/test";
+test("historical selection survives date changes and saving", async ({page}) => {
+  await page.goto('/');
+  await page.getByRole('button', {name:'Add flight', exact:true}).click();
+  await page.getByLabel('Departure date').fill('2020-01-01');
+  await page.getByRole('combobox', {name:'Departure airport'}).fill('TAO');
+  await expect(page.getByRole('listbox').getByRole('option').first()).toContainText('Liuting');
+  await page.getByRole('listbox').getByRole('option').first().click();
+  await page.getByLabel('Departure date').fill('2022-01-01');
+  await expect(page.getByRole('combobox', {name:'Departure airport'})).toHaveValue(/Liuting/);
+  await page.getByRole('combobox', {name:'Arrival airport'}).fill('PRG');
+  await page.getByRole('listbox').getByRole('option').first().click();
+  await page.getByRole('button', {name:'Save flight', exact:true}).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.reload();
+  await page.getByRole('button', {name:'Edit flight TAO'}).click();
+  await expect(page.getByRole('combobox', {name:'Departure airport'})).toHaveValue(/Liuting/);
+});

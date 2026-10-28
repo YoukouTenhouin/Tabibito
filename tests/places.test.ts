@@ -33,12 +33,12 @@ describe("localized place display and search", () => {
   });
   it("finds Chinese and original names and codes without changing airport identity", () => {
     const catalog = new AirportCatalog(airports);
-    expect(catalog.search("希思罗")).toContainEqual(lhr);
-    expect(catalog.search("伦敦")).toContainEqual(lhr);
-    expect(catalog.search("布拉格")).toContainEqual(prg);
-    expect(catalog.search("London")).toContainEqual(lhr);
-    expect(catalog.search("LHR")[0]).toEqual(lhr);
-    expect(earlyCatalog.search("希思罗")).toContainEqual(lhr);
+    expect(catalog.search("希思罗").map(row => row.airport)).toContainEqual(lhr);
+    expect(catalog.search("伦敦").map(row => row.airport)).toContainEqual(lhr);
+    expect(catalog.search("布拉格").map(row => row.airport)).toContainEqual(prg);
+    expect(catalog.search("London").map(row => row.airport)).toContainEqual(lhr);
+    expect(catalog.search("LHR")[0]?.airport).toEqual(lhr);
+    expect(earlyCatalog.search("希思罗").map(row => row.airport)).toContainEqual(lhr);
     const flight = { ...input, id: "test", createdAt: "", updatedAt: "" };
     expect(filteredFlights([flight], "伦敦", "2024")).toEqual([flight]);
     expect(filteredFlights([flight], "布拉格", "2023")).toEqual([]);

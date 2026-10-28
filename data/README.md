@@ -67,3 +67,30 @@ Failed requests, malformed or incomplete snapshots, fewer than 100 translated
 names, or a coverage drop greater than 10% abort the update without replacing the
 existing bundle. Review coverage changes and generated data before committing.
 Adding a new app locale does not require changing the airport or backup schema.
+
+## Historical airports
+
+`airport-history.json` is a reviewed overlay for passenger airport selection,
+with a research horizon of 1990-01-01. Initial coverage is TAO, CAN, KMG, HKG,
+SWA and the IST/ISL exchange; it is not exhaustive. Sources accompany each
+facility and code period. OurAirports supplies historical coordinates; government,
+airport and airline publications supply operational transition dates.
+
+Periods use inclusive `fromDate` and exclusive `untilDate`. The 1990 lower bound
+means coverage begins there, not that the airport opened then. HKG and IST/ISL
+have overlapping transition dates because both facilities operated on those days.
+Search uses the departure date as a ranking hint for both endpoints, never as a
+restriction; arrival dates and times are unavailable. Without a date, current
+assignments rank first. Earlier journeys remain manually selectable.
+
+Different physical sites have distinct pinned IDs. Code changes at the same site
+retain its ID. The catalog updater merges historical facilities after parsing;
+the translation updater preserves reviewed Chinese names. To add a case, record
+the physical site, coordinates, source links, code periods and Chinese name,
+then regenerate the bundles and add transition-date tests. Do not infer an
+operational date from a dataset edit timestamp. All sources must be reviewed.
+
+Selecting a result stores its period-specific codes and physical coordinates in
+the existing airport snapshot. Changing a date does not replace a selection.
+Saved history and backups are never automatically corrected; reselect an airport
+in the editor to correct an older entry.

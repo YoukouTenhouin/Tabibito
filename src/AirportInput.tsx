@@ -3,16 +3,18 @@ import { usePlaceNames } from "./usePlaceNames";
 import { useI18n } from "./i18n";
 import { useEffect, useId, useRef, useState } from "react";
 import { errorCode, type ErrorCode } from "./errors";
-import { searchAirports } from "./airports";
+import { searchAirports, type AirportSearchResult } from "./airports";
 import { airportCode, type Airport } from "./shared";
 import { Icon } from "./icons";
 
 export function AirportInput({
   label,
+  date,
   value,
   onChange,
 }: {
   label: string;
+  date?: string | null;
   value: Airport | null;
   onChange: (airport: Airport | null) => void;
 }) {
@@ -22,7 +24,7 @@ export function AirportInput({
   const [query, setQuery] = useState(
     value ? `${airportCode(value)} · ${airportName(value, locale)}` : "",
   );
-  const [results, setResults] = useState<Airport[]>([]);
+  const [results, setResults] = useState<AirportSearchResult[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,7 @@ export function AirportInput({
     setError("");
     setResults([]);
     const timer = setTimeout(() => {
-      searchAirports(query)
+      searchAirports(query, date)
         .then((rows) => {
           if (controller.signal.aborted) return;
           setResults(rows);
@@ -60,7 +62,7 @@ export function AirportInput({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, value, placeVersion]);
+  }, [query, value, placeVersion, date]);
   function select(airport: Airport) {
     onChange(airport);
     setOpen(false);
@@ -107,7 +109,7 @@ export function AirportInput({
             }
             if (event.key === "Enter" && open && results[active]) {
               event.preventDefault();
-              select(results[active]);
+              select(results[active].airport);
             }
             if (event.key === "Escape" && open) {
               event.preventDefault();
@@ -131,13 +133,13 @@ export function AirportInput({
           ) : results.length === 0 ? (
             <p>{t("airport.empty")}</p>
           ) : (
-            results.map((airport, index) => (
+            results.map(({ airport, period }, index) => (
               <button
                 type="button"
                 role="option"
                 aria-selected={active === index}
                 id={`${id}-${index}`}
-                key={airport.id}
+                key={`${airport.id}-${period?.fromDate ?? "current"}`}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => select(airport)}
                 className={active === index ? "active" : ""}
@@ -149,6 +151,7 @@ export function AirportInput({
                     {airportCity(airport, locale)} ·{" "}
                     {countryName(airport.country, locale)}
                     {airport.closed ? t("airport.closed") : ""}
+                    {period && <span> · {period.fromDate === "1990-01-01" ? "…" : period.fromDate} – {period.untilDate ? `< ${period.untilDate}` : "…"}</span>}
                   </small>
                 </span>
               </button>

@@ -35,7 +35,7 @@ describe("bundled airport catalog generation", () => {
     const catalog = airportSchema
       .array()
       .parse(JSON.parse(readFileSync(join(dir, "data/airports.json"), "utf8")));
-    expect(catalog).toHaveLength(1001);
+    expect(catalog).toHaveLength(1006);
     expect(catalog[0].name).toBe('Václav, "Test" Airport');
     expect(catalog[0].closed).toBe(true);
     expect(

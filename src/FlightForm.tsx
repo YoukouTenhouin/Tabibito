@@ -88,6 +88,7 @@ export function FlightForm({
           </div>
           <div className="airport-fields">
             <AirportInput
+              date={date || null}
               label={t("flight.origin")}
               value={origin}
               onChange={setOrigin}
@@ -96,6 +97,7 @@ export function FlightForm({
               <Icon name="arrow" size={18} />
             </div>
             <AirportInput
+              date={date || null}
               label={t("flight.destination")}
               value={destination}
               onChange={setDestination}
