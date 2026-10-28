@@ -7,7 +7,7 @@ import { type GeoJSONSource, type Map as MapInstance } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { airportFeatures, routeBounds, routeFeatures } from "./geometry";
-import { airportCode, type Flight } from "./shared";
+import { routeAirports, airportCode, type Flight } from "./shared";
 import { Icon } from "./icons";
 import { exportMapImage } from "./map-export";
 
@@ -298,7 +298,7 @@ export default function FlightMap({
         <div className="map-legend">
           <span />
           {selectedFlight
-            ? `${airportCode(selectedFlight.origin)} → ${airportCode(selectedFlight.destination)}`
+            ? routeAirports(selectedFlight).map(airportCode).join(" → ")
             : t("map.count", { count: flights.length })}
         </div>
         <div className="map-actions">

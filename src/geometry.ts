@@ -6,14 +6,15 @@ import type {
   MultiLineString,
   Point,
 } from "geojson";
-import { airportCode, type Flight } from "./shared";
+import { routeSegments, routeAirports, airportCode, type Flight } from "./shared";
 
 export function routeFeatures(
   flights: Flight[],
 ): FeatureCollection<LineString | MultiLineString> {
   return {
     type: "FeatureCollection",
-    features: flights.map<Feature<LineString | MultiLineString>>((flight) => {
+    features: flights.flatMap((parent) => routeSegments(parent).map<Feature<LineString | MultiLineString>>((segment) => {
+      const flight = { ...segment, id: parent.id };
       const start: [number, number] = [
         flight.origin.longitude,
         flight.origin.latitude,
@@ -53,14 +54,14 @@ export function routeFeatures(
         npoints: 128,
         properties: { id: flight.id },
       });
-    }),
+    })),
   };
 }
 
 export function airportFeatures(flights: Flight[]): FeatureCollection<Point> {
   const unique = new Map(
     flights
-      .flatMap((flight) => [flight.origin, flight.destination])
+      .flatMap(routeAirports)
       .map((airport) => [airport.id, airport]),
   );
   return {

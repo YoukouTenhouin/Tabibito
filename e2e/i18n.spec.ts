@@ -140,7 +140,7 @@ test("Chinese airport search, calendar, validation, editing and deletion", async
   await expect(page.getByText("你的故事从这里开始")).toBeVisible();
 });
 
-test("Chinese backups retain canonical version-1 records and report invalid files", async ({
+test("Chinese backups retain canonical version-2 records and report invalid files", async ({
   page,
 }) => {
   await mockMap(page);
@@ -170,7 +170,7 @@ test("Chinese backups retain canonical version-1 records and report invalid file
   for await (const chunk of (await download.createReadStream())!)
     chunks.push(Buffer.from(chunk));
   const exported = JSON.parse(Buffer.concat(chunks).toString());
-  expect(exported.version).toBe(1);
+  expect(exported.version).toBe(2);
   expect(exported.flights).toEqual(backup.flights);
 });
 

@@ -35,11 +35,11 @@ Flights are stored in IndexedDB in your browser, scoped to this site's origin. N
 
 Use **Backup & restore → Download backup** to save a portable JSON file. On another device, choose that file, review the counts, and confirm **Replace history**. Import replaces the entire current history; it does not merge. Export the current history first if you want to keep it. If history changes after the preview (including in another tab), preview the file again before importing.
 
-The JSON format is compatible with Tabibito's local/server version (`app: "tabibito"`, `version: 1`). Airport snapshots, flight IDs, and timestamps survive transfer. Imports validate the file before changing data and accept up to 10,000 flights in files no larger than 10 MB. Browser storage errors are reported rather than silently resetting history.
+Backups export `app: "tabibito"`, `version: 2`, including ordered stop airport snapshots. Version-1 backups remain importable; new exports require a version-2-capable app. Airport snapshots, flight IDs, and timestamps survive transfer. Imports validate the file before changing data and accept up to 10,000 flights in files no larger than 10 MB. Browser storage errors are reported rather than silently resetting history.
 
 ## Manual flights and maps
 
-Choose departure and arrival airports by city, name, IATA, or ICAO code. Date and flight number are optional. Flight-number API lookup is not available in this edition.
+Choose departure and arrival airports by city, name, IATA, or ICAO code. Date and flight number are optional. Add, remove, or reorder intermediate airport stops within a flight. Each segment is plotted separately and contributes to estimated distance; stops count toward airport and country totals, while the entry counts as one flight. Flight-number API lookup is not available in this edition.
 
 Airport searches run locally against the bundled OurAirports catalog, including closed airports for historical journeys. MapLibre renders routes in the browser using external OpenFreeMap map tiles. Tile requests still require network access and expose ordinary request information to that provider; saved flight records are not sent to it. Journal and backup operations remain available when maps fail. This is not an installable offline PWA.
 

@@ -129,7 +129,7 @@ export class FlightStore {
   async export(): Promise<Backup> {
     return {
       app: "tabibito",
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
       flights: await this.list(),
     };

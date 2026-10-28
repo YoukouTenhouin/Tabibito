@@ -1494,3 +1494,9 @@ html:lang(zh-Hans) .map-caption {
     padding-right: 9px;
   }
 }
+
+.stop-row { margin: 16px 0; }
+.stop-actions { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+.stop-actions button { padding: 6px; }
+.map-legend { overflow-wrap: anywhere; min-width: 0; }
+.flight-select p { overflow-wrap: anywhere; }

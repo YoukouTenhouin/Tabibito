@@ -42,9 +42,16 @@ export const en = {
   "history.manual": "MANUAL ENTRY",
   "history.saved": "Saved in this browser",
   "history.noDate": "Date not recorded",
+  "history.showFullRoute": "Show {{route}} on map",
   "history.showRoute": "Show {{origin}} to {{destination}} on map",
   "history.edit": "Edit flight {{flight}}",
   "history.delete": "Delete flight {{flight}}",
+  "flight.addStop": "Add stop",
+  "flight.stop": "Stop {{number}}",
+  "flight.removeStop": "Remove stop",
+  "flight.moveUp": "Move up",
+  "flight.moveDown": "Move down",
+  "flight.via": "Via {{stops}}",
   "flight.add": "Add flight",
   "flight.editTitle": "Edit your flight",
   "flight.addTitle": "Add a journey",
@@ -133,8 +140,8 @@ export const en = {
   "errors.flightNumber":
     "Use an airline code and flight number, for example BA249 or U21234.",
   "errors.differentAirports":
-    "Choose different departure and arrival airports.",
-  "errors.selectAirports": "Select both airports before saving.",
+    "Departure and arrival must differ, and consecutive airports must differ.",
+  "errors.selectAirports": "Select every airport before saving.",
   "errors.duplicateFlights": "Backup contains duplicate flight IDs.",
   "errors.invalidData": "The flight data is invalid. No data has been changed.",
   "errors.storageOpen":
@@ -151,7 +158,7 @@ export const en = {
     "History changed since the preview. Preview the backup again before restoring.",
   "errors.backupSize": "Choose a backup smaller than 10 MB.",
   "errors.backupInvalid":
-    "This is not a valid Tabibito version 1 backup. No data has been changed.",
+    "This is not a valid Tabibito version 1 or 2 backup. No data has been changed.",
   "errors.backupJson": "This file is not valid JSON. No data has been changed.",
   "errors.catalog": "Airport catalog could not load. Please try again.",
   "errors.mapStart":

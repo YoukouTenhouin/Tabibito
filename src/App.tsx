@@ -11,7 +11,7 @@ import {
 } from "react";
 import { errorCode, type ErrorCode } from "./errors";
 import { flightStore } from "./storage";
-import { airportCode, filteredFlights, type Flight } from "./shared";
+import { routeAirports, airportCode, filteredFlights, type Flight } from "./shared";
 import { FlightForm } from "./FlightForm";
 import { BackupDialog } from "./BackupDialog";
 import { Modal } from "./Modal";
@@ -97,13 +97,10 @@ export default function App() {
     .sort()
     .reverse();
   const airports = new Set(
-    flights.flatMap((flight) => [flight.origin.id, flight.destination.id]),
+    flights.flatMap(routeAirports).map(airport => airport.id),
   );
   const countries = new Set(
-    flights.flatMap((flight) => [
-      flight.origin.country,
-      flight.destination.country,
-    ]),
+    flights.flatMap(routeAirports).map(airport => airport.country),
   );
   async function remove() {
     if (!deleting) return;
@@ -321,7 +318,7 @@ export default function App() {
                       className="flight-select"
                       onClick={() => setSelected(flight.id)}
                       aria-pressed={selected === flight.id}
-                      aria-label={t("history.showRoute", {
+                      aria-label={flight.stops.length ? t("history.showFullRoute", { route: routeAirports(flight).map(airportCode).join(" → ") }) : t("history.showRoute", {
                         origin: airportCode(flight.origin),
                         destination: airportCode(flight.destination),
                       })}
@@ -353,6 +350,7 @@ export default function App() {
                           </span>
                         </div>
                       </div>
+                      {flight.stops.length > 0 && <p>{t("flight.via", { stops: flight.stops.map(airportCode).join(" → ") })}</p>}
                     </button>
                     <div className="flight-card-bottom">
                       <span>
@@ -448,7 +446,7 @@ export default function App() {
       {deleting && (
         <Modal
           title={t("flight.deleteTitle")}
-          subtitle={`${airportCode(deleting.origin)} → ${airportCode(deleting.destination)} · ${displayDate(deleting.date)}`}
+          subtitle={`${routeAirports(deleting).map(airportCode).join(" → ")} · ${displayDate(deleting.date)}`}
           onClose={() => setDeleting(null)}
           busy={deleteBusy}
         >

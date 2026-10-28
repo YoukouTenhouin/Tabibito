@@ -24,6 +24,7 @@ export function FlightForm({
   const [destination, setDestination] = useState<Airport | null>(
     flight?.destination ?? null,
   );
+  const [stops, setStops] = useState(() => (flight?.stops ?? []).map(airport => ({ key: crypto.randomUUID(), airport: airport as Airport | null })));
   const [error, setError] = useState<ErrorCode | "">("");
   const [busy, setBusy] = useState<"save" | null>(null);
   async function save(event: React.FormEvent) {
@@ -34,10 +35,11 @@ export function FlightForm({
       flightNumber: number.trim() || null,
       origin,
       destination,
+      stops: stops.map(stop => stop.airport),
     });
     if (!parsed.success) {
       setError(
-        !origin || !destination
+        !origin || !destination || stops.some(stop => !stop.airport)
           ? "errors.selectAirports"
           : errorCode(parsed.error),
       );
@@ -96,6 +98,15 @@ export function FlightForm({
             <div className="route-divider">
               <Icon name="arrow" size={18} />
             </div>
+            {stops.map((stop, index) => <div key={stop.key} className="stop-row">
+              <AirportInput date={date || null} label={t("flight.stop", { number: index + 1 })} value={stop.airport} onChange={airport => setStops(rows => rows.map(row => row.key === stop.key ? { ...row, airport } : row))} />
+              <div className="stop-actions">
+                <button type="button" disabled={index === 0} onClick={() => setStops(rows => { const next = [...rows]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; return next; })}>{t("flight.moveUp")}</button>
+                <button type="button" disabled={index === stops.length - 1} onClick={() => setStops(rows => { const next = [...rows]; [next[index], next[index + 1]] = [next[index + 1], next[index]]; return next; })}>{t("flight.moveDown")}</button>
+                <button type="button" onClick={() => setStops(rows => rows.filter(row => row.key !== stop.key))}>{t("flight.removeStop")}</button>
+              </div>
+            </div>)}
+            <button type="button" className="button secondary" onClick={() => setStops(rows => [...rows, { key: crypto.randomUUID(), airport: null }])}>{t("flight.addStop")}</button>
             <AirportInput
               date={date || null}
               label={t("flight.destination")}
@@ -119,7 +130,7 @@ export function FlightForm({
             <button
               className="button primary"
               type="submit"
-              disabled={!origin || !destination}
+              disabled={!origin || !destination || stops.some(stop => !stop.airport)}
             >
               <Icon name="plus" size={17} />
               {busy === "save"

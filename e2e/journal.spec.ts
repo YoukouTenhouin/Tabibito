@@ -207,7 +207,7 @@ test("invalid imports preserve history and downloaded backups contain the saved 
   for await (const chunk of stream!) chunks.push(Buffer.from(chunk));
   const exported = JSON.parse(Buffer.concat(chunks).toString());
   expect(exported.app).toBe("tabibito");
-  expect(exported.version).toBe(1);
+  expect(exported.version).toBe(2);
   expect(exported.flights).toEqual(backup.flights);
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(page.locator(".flight-card")).toHaveCount(1);

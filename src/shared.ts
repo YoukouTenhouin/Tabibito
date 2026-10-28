@@ -47,9 +47,11 @@ const flightFields = {
   flightNumber: flightNumberSchema.nullable(),
   origin: airportSchema,
   destination: airportSchema,
+  stops: z.array(airportSchema).default([]),
 };
-const differentAirports = (value: { origin: Airport; destination: Airport }) =>
-  value.origin.id !== value.destination.id;
+const differentAirports = (value: { origin: Airport; destination: Airport; stops?: Airport[] }) =>
+  value.origin.id !== value.destination.id &&
+  routeAirports(value).every((airport, index, all) => index === 0 || airport.id !== all[index - 1].id);
 export const flightInputSchema = z
   .object(flightFields)
   .strict()
@@ -63,14 +65,20 @@ export const flightSchema = z
   })
   .strict()
   .refine(differentAirports, "errors.differentAirports");
+const legacyFlightSchema = z.object({ ...flightFields, stops: z.never().optional(), id: z.uuid(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime() }).strict().refine(differentAirports, "errors.differentAirports");
 export const backupSchema = z
   .object({
     app: z.literal("tabibito"),
-    version: z.literal(1),
+    version: z.union([z.literal(1), z.literal(2)]),
     exportedAt: z.iso.datetime(),
-    flights: z.array(flightSchema).max(10_000),
+    flights: z.array(z.unknown()).max(10_000),
   })
   .strict()
+  .transform((value, ctx) => {
+    const parsed = z.array(value.version === 1 ? legacyFlightSchema : flightSchema.safeExtend({ stops: z.array(airportSchema) })).safeParse(value.flights);
+    if (!parsed.success) { ctx.addIssue({ code: "custom", message: "errors.backupInvalid" }); return z.NEVER; }
+    return { ...value, version: 2 as const, flights: parsed.data.map(flight => flightSchema.parse(flight)) };
+  })
   .refine(
     (value) =>
       new Set(value.flights.map((flight) => flight.id)).size ===
@@ -78,7 +86,7 @@ export const backupSchema = z
     "errors.duplicateFlights",
   );
 export type Airport = z.infer<typeof airportSchema>;
-export type FlightInput = z.infer<typeof flightInputSchema>;
+export type FlightInput = z.input<typeof flightInputSchema>;
 export type Flight = z.infer<typeof flightSchema>;
 export type Backup = z.infer<typeof backupSchema>;
 export const airportCode = (airport: Airport) =>
@@ -100,7 +108,7 @@ export function filteredFlights(
     const text = [
       flight.flightNumber,
       flight.date,
-      ...[flight.origin, flight.destination].flatMap((a) => [
+      ...routeAirports(flight).flatMap((a) => [
         a.name,
         a.city,
         a.country,
@@ -114,3 +122,6 @@ export function filteredFlights(
     return text.includes(query);
   });
 }
+
+export function routeAirports(route: { origin: Airport; destination: Airport; stops?: Airport[] }): Airport[] { return [route.origin, ...(route.stops ?? []), route.destination]; }
+export function routeSegments(route: { origin: Airport; destination: Airport; stops?: Airport[] }) { const airports = routeAirports(route); return airports.slice(1).map((destination, index) => ({ origin: airports[index], destination })); }

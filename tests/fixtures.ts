@@ -43,7 +43,8 @@ export const sfo: Airport = {
   longitude: -122.375,
   closed: false,
 };
-export const input: FlightInput = {
+export const input: FlightInput & { stops: Airport[] } = {
+  stops: [],
   origin: prg,
   destination: lhr,
   date: "2024-07-09",

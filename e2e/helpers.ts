@@ -3,10 +3,11 @@ import type { FlightInput, Backup } from "../src/shared";
 export function backupFor(inputs: FlightInput[]): Backup {
   return {
     app: "tabibito",
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     flights: inputs.map((input) => ({
       ...input,
+      stops: input.stops ?? [],
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

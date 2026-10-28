@@ -59,14 +59,14 @@ describe("flight records and portable backups", () => {
   it("round-trips airport snapshots without a provider or catalog", () => {
     const backup = {
       app: "tabibito",
-      version: 1,
+      version: 2,
       exportedAt: "2026-10-27T00:00:00.000Z",
       flights: [flight],
     };
     expect(backupSchema.parse(JSON.parse(JSON.stringify(backup)))).toEqual(
       backup,
     );
-    expect(backupSchema.safeParse({ ...backup, version: 2 }).success).toBe(
+    expect(backupSchema.safeParse({ ...backup, version: 3 }).success).toBe(
       false,
     );
     expect(

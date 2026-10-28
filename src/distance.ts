@@ -1,11 +1,14 @@
-import type { Flight } from "./shared";
+import { routeSegments, type Flight } from "./shared";
 
-type Route = Pick<Flight, "origin" | "destination">;
+type Route = Pick<Flight, "origin" | "destination"> & Partial<Pick<Flight, "stops">>;
 const EARTH_RADIUS_KM = 6371.0088;
 const KM_PER_MILE = 1.609344;
 
 /** Haversine distance on a sphere; independent of map projection or route drawing. */
-export function flightDistanceKm({ origin, destination }: Route): number {
+export function flightDistanceKm(route: Route): number {
+  return routeSegments(route).reduce((total, segment) => total + segmentDistanceKm(segment), 0);
+}
+function segmentDistanceKm({ origin, destination }: Route): number {
   const radians = (degrees: number) => (degrees * Math.PI) / 180;
   const latitude = radians(destination.latitude - origin.latitude);
   const longitude = radians(destination.longitude - origin.longitude);
