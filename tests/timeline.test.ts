@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { advanceTimeline, prepareTimelineRoute, timelineDates, timelineRouteFrame } from "../src/timeline";
 import type { Flight } from "../src/shared";
 import { input, hnd, sfo, lhr, prg } from "./fixtures";
+import { routeFeatures } from "../src/geometry";
 const flight = (overrides: Partial<Flight> = {}): Flight => ({ ...input, id: "a", createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z", ...overrides });
 
 describe("timeline dates and clock", () => {
@@ -24,6 +25,19 @@ describe("timeline dates and clock", () => {
 });
 
 describe("progressive geometry", () => {
+  it("follows the directional bend and finishes on the static route in both directions", () => {
+    const west = { ...prg, longitude: -20, latitude: 0 };
+    const east = { ...lhr, longitude: 20, latitude: 0 };
+    for (const [origin, destination, side] of [[west, east, -1], [east, west, 1]] as const) {
+      const f = flight({ origin, destination });
+      const prepared = prepareTimelineRoute(f);
+      const frame = timelineRouteFrame(prepared, 0.5);
+      const geometry = frame.routes.features[0].geometry;
+      const points = geometry.type === "LineString" ? geometry.coordinates : geometry.coordinates.flat();
+      expect(points.at(-1)![1] * side).toBeGreaterThan(3);
+      expect(timelineRouteFrame(prepared, 1).routes).toEqual(routeFeatures([f]));
+    }
+  });
   it("starts empty, draws stops by distance, and finishes with the original geometry", () => {
     const route = prepareTimelineRoute(flight({ origin: prg, stops: [lhr], destination: sfo }));
     expect(timelineRouteFrame(route, 0).routes.features).toHaveLength(0);

@@ -28,7 +28,10 @@ test.beforeEach(async ({ page }) => {
     });
   });
   await page.goto("/");
-  await restore(page, backupFor([{ ...input, origin: lhr, destination: sfo }]));
+  await restore(page, backupFor([
+    { ...input, origin: lhr, destination: sfo },
+    { ...input, origin: sfo, destination: lhr },
+  ]));
   await expect(
     page.getByRole("button", { name: "Export map", exact: true }),
   ).toBeEnabled();
@@ -74,7 +77,11 @@ test("downloads rendered map and globe PNGs with routes and a credit footer", as
         image.height - 112,
       ).data;
       let routePixels = 0;
+      let returnPixels = 0;
       for (let i = 0; i < map.length; i += 4) {
+        // The unselected return arc remains visible beside the selected route.
+        if (map[i] < 150 && map[i + 1] > map[i] + 15 && map[i + 2] < map[i + 1])
+          returnPixels++;
         // Selected route is orange, distinct from the fixture basemap.
         if (
           map[i] > 150 &&
@@ -94,9 +101,10 @@ test("downloads rendered map and globe PNGs with routes and a credit footer", as
       let textPixels = 0;
       for (let i = 0; i < footer.length; i += 4)
         if (footer[i] < 120 && footer[i + 1] < 140) textPixels++;
-      return { routePixels, textPixels };
+      return { routePixels, returnPixels, textPixels };
     }, buffer.toString("base64"));
     expect(pixels.routePixels).toBeGreaterThan(100);
+    expect(pixels.returnPixels).toBeGreaterThan(100);
     expect(pixels.textPixels).toBeGreaterThan(100);
     await expect(
       page.getByRole("button", { name: "Export map", exact: true }),
